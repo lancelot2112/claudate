@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: claudate-postgres
+    environment:
+      POSTGRES_USER: claudate
+      POSTGRES_PASSWORD: claudate_dev_password
+      POSTGRES_DB: claudate
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claudate"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: claudate-redis
+    command: redis-server --appendonly yes --requirepass claudate_redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Vector Database (using Chroma for development)
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: claudate-chroma
+    environment:
+      - CHROMA_HOST=0.0.0.0
+      - CHROMA_PORT=8000
+    volumes:
+      - chroma_data:/chroma/chroma
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # Claudate Backend API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: claudate-api
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://claudate:claudate_dev_password@postgres:5432/claudate
+      REDIS_URL: redis://:claudate_redis_password@redis:6379
+      CHROMA_URL: http://chroma:8000
+      PORT: 3000
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - generated_charts:/app/generated_charts
+      - temp_images:/app/temp_images
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Agent Workers
+  agents:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: claudate-agents
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://claudate:claudate_dev_password@postgres:5432/claudate
+      REDIS_URL: redis://:claudate_redis_password@redis:6379
+      CHROMA_URL: http://chroma:8000
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - agent_state:/app/agent_state
+      - context_cache:/app/context_cache
+    command: ["npm", "run", "agents:start"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      chroma:
+        condition: service_started
+    restart: unless-stopped
+
+  # Development Frontend (Next.js)
+  frontend:
+    image: node:18-alpine
+    container_name: claudate-frontend
+    working_dir: /app
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3001:3000"
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+  generated_charts:
+  temp_images:
+  agent_state:
+  context_cache:
+  frontend_node_modules:
+
+networks:
+  default:
+    name: claudate-network
