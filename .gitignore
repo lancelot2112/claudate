@@ -1,0 +1,69 @@
+# Private configuration files
+config/private.json
+config/private.*.json
+*.private.json
+
+# API keys and credentials
+.env
+.env.local
+.env.production
+.env.staging
+*.key
+*.pem
+credentials.json
+
+# Logs and debug files
+*.log
+logs/
+debug/
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
+# Agent state and session data
+agent_state/
+sessions/
+*.session
+*.state
+
+# Output and build files
+dist/
+build/
+*.exe
+*.dmg
+*.pkg
