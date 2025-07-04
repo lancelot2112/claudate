@@ -10,17 +10,9 @@ export interface AgentCapability {
 }
 
 export interface AgentConfig {
-  id: string;
-  type: AgentType;
   name: string;
-  description: string;
-  capabilities: AgentCapability[];
-  maxConcurrentTasks: number;
-  timeout: number;
-  retryAttempts: number;
-  priority: number;
-  enabled: boolean;
-  metadata?: Record<string, any>;
+  type: AgentType;
+  capabilities: string[];
 }
 
 export interface AgentStatus {
@@ -80,12 +72,9 @@ export interface AgentDecision {
 export interface AgentContext {
   sessionId: string;
   userId: string;
-  currentTask?: Task;
-  conversationHistory: BaseMessage[];
-  userPreferences: Record<string, any>;
-  activeProjects: string[];
-  recentDecisions: AgentDecision[];
-  contextWindow: number;
+  task: any;
+  previousMessages?: BaseMessage[];
+  metadata?: Record<string, any>;
   timestamp: Date;
 }
 
@@ -113,7 +102,7 @@ export interface IAgent extends NodeJS.EventEmitter {
   assignTask(task: Task): Promise<void>;
   handoffTask(task: Task, targetAgent: string, reason: string): Promise<AgentHandoff>;
   updateContext(context: Partial<AgentContext>): void;
-  getCapabilities(): AgentCapability[];
+  getCapabilities(): string[];
   getStatus(): AgentStatus;
   canHandle(task: Task): boolean;
 }
@@ -176,4 +165,12 @@ export interface RoutingDecision {
   urgency: UrgencyLevel;
   estimatedProcessingTime: number;
   requiredCapabilities: string[];
+}
+
+export interface AgentResult {
+  success: boolean;
+  agentId: string;
+  timestamp: number;
+  error?: string;
+  metadata?: Record<string, any>;
 }
