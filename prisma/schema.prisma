@@ -1,0 +1,184 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  timezone  String   @default("UTC")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sessions Session[]
+  messages Message[]
+  tasks    Task[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  agentId   String?
+  status    String   @default("active") // active, completed, expired
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime?
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@map("sessions")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  sessionId String?
+  userId    String
+  agentId   String?
+  content   String
+  channel   String   // sms, mms, google-chat, email, voice, video
+  direction String   // incoming, outgoing
+  type      String   // text, image, audio, video, file, chart
+  urgency   String   @default("normal") // critical, high, normal, low
+  status    String   @default("pending") // pending, processing, completed, failed
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@map("messages")
+}
+
+model Agent {
+  id               String   @id
+  type             String   // personal-assistant, gemini-strategic, claude-execution
+  name             String
+  description      String?
+  status           String   @default("offline") // offline, idle, busy, error
+  maxConcurrentTasks Int    @default(5)
+  priority         Int      @default(1)
+  enabled          Boolean  @default(true)
+  capabilities     Json     @default("[]")
+  config           Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  lastActivity     DateTime @default(now())
+
+  // Relations
+  tasks Task[]
+
+  @@map("agents")
+}
+
+model Task {
+  id           String    @id @default(cuid())
+  userId       String
+  agentId      String?
+  type         String
+  priority     String    @default("normal") // critical, high, normal, low
+  status       String    @default("pending") // pending, in_progress, completed, failed, cancelled
+  input        Json
+  output       Json?
+  error        String?
+  retryCount   Int       @default(0)
+  maxRetries   Int       @default(3)
+  createdAt    DateTime  @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@map("tasks")
+}
+
+model AgentMemory {
+  id        String   @id @default(cuid())
+  agentId   String
+  type      String   // short_term, medium_term, context
+  key       String
+  value     Json
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agentId, type, key])
+  @@map("agent_memory")
+}
+
+model Decision {
+  id         String   @id @default(cuid())
+  agentId    String
+  sessionId  String?
+  context    String
+  decision   String
+  reasoning  String
+  confidence Float    @default(0.5)
+  outcome    String?  // successful, failed, pending
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("decisions")
+}
+
+model ExecutiveBrief {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  summary     String
+  keyPoints   Json      @default("[]")
+  urgency     String    @default("normal")
+  actionItems Json?     @default("[]")
+  deadline    DateTime?
+  attachments Json?     @default("[]")
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("executive_briefs")
+}
+
+model CommunicationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  channel   String
+  direction String   // incoming, outgoing
+  success   Boolean  @default(true)
+  error     String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("communication_logs")
+}
+
+model SystemHealth {
+  id          String   @id @default(cuid())
+  component   String   // api, database, redis, agents, communication
+  status      String   // healthy, degraded, unhealthy
+  lastCheck   DateTime @default(now())
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([component])
+  @@map("system_health")
+}

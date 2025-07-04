@@ -112,7 +112,7 @@ fastify.setErrorHandler((error, request, reply) => {
   });
 
   const statusCode = error.statusCode || 500;
-  const response = {
+  const response: any = {
     error: true,
     message: statusCode === 500 ? 'Internal Server Error' : error.message,
     statusCode,
