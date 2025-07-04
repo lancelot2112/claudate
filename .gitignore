@@ -8,29 +8,77 @@ config/private.*.json
 .env.local
 .env.production
 .env.staging
+.env.development
 *.key
 *.pem
 credentials.json
+service-account.json
+google-credentials.json
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vite/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.pnpm-store/
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+junit.xml
+test-results/
 
 # Logs and debug files
 *.log
 logs/
 debug/
+.logs/
 
 # Runtime files
 *.pid
 *.seed
 *.pid.lock
 
-# Dependency directories
-node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.egg-info/
-.venv/
-venv/
-env/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+data/
+redis-data/
+postgres-data/
+
+# Agent state and session data
+agent_state/
+sessions/
+*.session
+*.state
+context_cache/
+knowledge_store/
+
+# Generated visual content
+generated_charts/
+temp_images/
+briefing_assets/
 
 # IDE and editor files
 .vscode/
@@ -38,6 +86,8 @@ env/
 *.swp
 *.swo
 *~
+.vimrc
+.editorconfig
 
 # OS generated files
 .DS_Store
@@ -55,15 +105,28 @@ tmp/
 *.bak
 *.backup
 
-# Agent state and session data
-agent_state/
-sessions/
-*.session
-*.state
+# Docker
+.dockerignore
+docker-compose.override.yml
+docker-compose.local.yml
 
-# Output and build files
-dist/
-build/
-*.exe
-*.dmg
-*.pkg
+# Monitoring and analytics
+.nyc_output/
+.coverage/
+metrics/
+analytics/
+
+# Security scanning
+.snyk
+.security/
+
+# AI/ML model files
+*.model
+*.weights
+embeddings/
+vector_cache/
+
+# Communication logs
+sms_logs/
+chat_logs/
+call_logs/
