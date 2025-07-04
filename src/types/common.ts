@@ -6,7 +6,7 @@ export type AgentType = 'personal-assistant' | 'gemini-strategic' | 'claude-exec
 
 export type CommunicationChannel = 'sms' | 'mms' | 'google-chat' | 'email' | 'voice' | 'video';
 
-export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'file' | 'chart';
+export type MessageType = 'text' | 'image' | 'audio' | 'video' | 'file' | 'chart' | 'media';
 
 export type UrgencyLevel = 'critical' | 'high' | 'normal' | 'low';
 
@@ -15,11 +15,10 @@ export type MessageDirection = 'incoming' | 'outgoing';
 export interface BaseMessage {
   id: string;
   timestamp: Date;
-  channel: CommunicationChannel;
-  direction: MessageDirection;
   type: MessageType;
   urgency: UrgencyLevel;
   content: string;
+  source?: string;
   metadata?: Record<string, any>;
 }
 
