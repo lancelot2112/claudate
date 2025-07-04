@@ -429,3 +429,172 @@ const detailedBriefing = await personalAssistant.sendGoogleChatBriefing({
 - Time-based routing (SMS for urgent, Chat for detailed)
 - Fallback options when primary channels are unavailable
 - Cross-channel context preservation
+
+## Project Structure
+
+### Recommended Folder Organization
+
+```
+claudate/
+├── README.md
+├── LICENSE
+├── package.json
+├── tsconfig.json
+├── docker-compose.yml
+├── Dockerfile
+├── .gitignore
+├── .env.example
+│
+├── config/
+│   ├── private.example.json
+│   ├── agents.json
+│   ├── database.json
+│   └── communication.json
+│
+├── src/
+│   ├── agents/
+│   │   ├── base/
+│   │   │   ├── Agent.ts
+│   │   │   ├── Context.ts
+│   │   │   └── Memory.ts
+│   │   ├── personal-assistant/
+│   │   │   ├── PersonalAssistantAgent.ts
+│   │   │   ├── VisualBriefing.ts
+│   │   │   └── ChannelRouter.ts
+│   │   ├── gemini/
+│   │   │   ├── StrategicAgent.ts
+│   │   │   └── PlanningAgent.ts
+│   │   └── claude/
+│   │       ├── CodingAgent.ts
+│   │       ├── TestingAgent.ts
+│   │       └── ToolExecutionAgent.ts
+│   │
+│   ├── communication/
+│   │   ├── channels/
+│   │   │   ├── SMS.ts
+│   │   │   ├── MMS.ts
+│   │   │   ├── GoogleChat.ts
+│   │   │   └── Email.ts
+│   │   ├── processors/
+│   │   │   ├── TextProcessor.ts
+│   │   │   ├── ImageProcessor.ts
+│   │   │   ├── VoiceProcessor.ts
+│   │   │   └── VideoProcessor.ts
+│   │   └── Router.ts
+│   │
+│   ├── knowledge/
+│   │   ├── stores/
+│   │   │   ├── VectorStore.ts
+│   │   │   ├── GraphStore.ts
+│   │   │   └── RelationalStore.ts
+│   │   ├── ingestion/
+│   │   │   ├── DocumentIngestion.ts
+│   │   │   ├── CodeIngestion.ts
+│   │   │   └── ConversationIngestion.ts
+│   │   └── retrieval/
+│   │       ├── RAG.ts
+│   │       ├── SemanticSearch.ts
+│   │       └── ContextBuilder.ts
+│   │
+│   ├── context/
+│   │   ├── managers/
+│   │   │   ├── ContextManager.ts
+│   │   │   ├── SessionManager.ts
+│   │   │   └── HandoffManager.ts
+│   │   ├── storage/
+│   │   │   ├── HotStorage.ts (Redis)
+│   │   │   ├── WarmStorage.ts (PostgreSQL)
+│   │   │   └── ColdStorage.ts (Vector DB)
+│   │   └── compression/
+│   │       ├── Summarizer.ts
+│   │       └── Optimizer.ts
+│   │
+│   ├── visual/
+│   │   ├── generators/
+│   │   │   ├── ChartGenerator.ts
+│   │   │   ├── DashboardGenerator.ts
+│   │   │   └── DiagramGenerator.ts
+│   │   ├── templates/
+│   │   │   ├── ExecutiveTemplates.ts
+│   │   │   └── StatusTemplates.ts
+│   │   └── optimizers/
+│   │       ├── MobileOptimizer.ts
+│   │       └── CompressionOptimizer.ts
+│   │
+│   ├── api/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   └── controllers/
+│   │
+│   ├── database/
+│   │   ├── models/
+│   │   ├── migrations/
+│   │   └── seeds/
+│   │
+│   ├── queue/
+│   │   ├── workers/
+│   │   └── jobs/
+│   │
+│   ├── integrations/
+│   │   ├── ai/
+│   │   ├── communication/
+│   │   └── storage/
+│   │
+│   ├── utils/
+│   ├── types/
+│   └── server.ts
+│
+├── frontend/
+│   ├── pages/
+│   ├── components/
+│   ├── hooks/
+│   └── styles/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── e2e/
+│   └── fixtures/
+│
+├── scripts/
+│   ├── setup/
+│   ├── migration/
+│   └── deployment/
+│
+├── docs/
+│   ├── api/
+│   ├── agents/
+│   └── architecture/
+│
+└── docker/
+    ├── backend/
+    ├── frontend/
+    └── database/
+```
+
+### Architecture Design Principles
+
+**Agent-Centric Organization:**
+- Each agent type (Personal Assistant, Gemini Strategic, Claude Execution) has dedicated directories
+- Base agent classes provide common functionality and interfaces
+- Clear separation between strategic planning and tactical execution
+
+**Communication Layer Separation:**
+- Channel-specific implementations for SMS, MMS, Google Chat, Email
+- Content processors for different media types (text, image, voice, video)
+- Intelligent routing logic for optimal channel selection
+
+**Knowledge Management:**
+- Separate storage implementations for vector, graph, and relational data
+- Ingestion pipelines for documents, code repositories, and conversations
+- Retrieval systems supporting RAG and semantic search
+
+**Context Management:**
+- Tiered storage architecture (hot/warm/cold) for different data access patterns
+- Session and agent handoff management
+- Context compression and optimization for token efficiency
+
+**Visual Generation:**
+- Chart and dashboard generators for executive briefings
+- Template system for consistent visual styling
+- Mobile-optimized output for SMS/MMS delivery
