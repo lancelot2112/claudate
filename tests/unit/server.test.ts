@@ -1,6 +1,10 @@
-import fastify from '../../src/server';
+import fastify, { initializeForTesting } from '../../src/server';
 
 describe('Server', () => {
+  beforeAll(async () => {
+    await initializeForTesting();
+  });
+
   afterAll(async () => {
     await fastify.close();
   });

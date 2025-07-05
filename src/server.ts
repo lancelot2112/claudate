@@ -177,6 +177,18 @@ async function start() {
   }
 }
 
+// Initialize server for testing
+async function initializeForTesting() {
+  try {
+    await registerPlugins();
+    await registerRoutes();
+    return fastify;
+  } catch (error) {
+    logger.error('Failed to initialize server for testing:', error);
+    throw error;
+  }
+}
+
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   logger.error('Uncaught Exception:', error);
@@ -194,3 +206,4 @@ if (require.main === module) {
 }
 
 export default fastify;
+export { initializeForTesting };
