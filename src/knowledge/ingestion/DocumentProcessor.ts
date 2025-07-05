@@ -4,8 +4,8 @@ import {
   DocumentChunk, 
   DocumentMetadata,
   DocumentProcessingError 
-} from '../../types/Knowledge.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import logger from '../../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 
 export abstract class BaseDocumentProcessor implements IDocumentProcessor {

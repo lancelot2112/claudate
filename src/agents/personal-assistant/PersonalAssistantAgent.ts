@@ -1,4 +1,4 @@
-import { BaseAgent } from '@/agents/base/Agent';
+import { BaseAgent } from '../base/Agent';
 import { 
   AgentConfig, 
   AgentContext, 
@@ -8,11 +8,11 @@ import {
   ExecutiveBrief,
   RoutingDecision,
   CommunicationPreference
-} from '@/types/Agent';
-import { BaseMessage, UrgencyLevel } from '@/types/common';
-import { agentMemoryManager } from '@/agents/base/Memory';
-import { agentLogger, logAgentAction } from '@/utils/logger';
-import { loadPrivateConfig } from '@/utils/config';
+} from '../../types/Agent';
+import { BaseMessage, UrgencyLevel } from '../../types/common';
+import { agentMemoryManager } from '../base/Memory';
+import { agentLogger, logAgentAction } from '../../utils/logger';
+import { loadPrivateConfig } from '../../utils/config';
 
 export class PersonalAssistantAgent extends BaseAgent {
   private userConfig: any;

@@ -53,19 +53,19 @@ describe('AgentCoordinator Integration Tests', () => {
     mockAgent1.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent1.id,
-      timestamp: Date.now()
+      timestamp: new Date()
     });
 
     mockAgent2.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent2.id,
-      timestamp: Date.now()
+      timestamp: new Date()
     });
 
     mockAgent3.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent3.id,
-      timestamp: Date.now()
+      timestamp: new Date()
     });
   });
 
@@ -126,7 +126,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Write a JavaScript function',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         },
         'medium'
@@ -146,9 +146,9 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should prioritize tasks correctly', async () => {
       const taskIds = await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Low priority task', timestamp: Date.now(), metadata: {} }, 'low'),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Critical task', timestamp: Date.now(), metadata: {} }, 'critical'),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Medium priority task', timestamp: Date.now(), metadata: {} }, 'medium')
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Low priority task', timestamp: new Date(), metadata: {} }, 'low'),
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Critical task', timestamp: new Date(), metadata: {} }, 'critical'),
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Medium priority task', timestamp: new Date(), metadata: {} }, 'medium')
       ]);
 
       // Wait for task processing
@@ -166,7 +166,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Task requiring unknown capability',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -198,7 +198,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Test task',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -219,7 +219,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Create strategic plan',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -240,7 +240,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Write code',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -278,7 +278,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Create plan',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         },
         urgency: 'medium'
@@ -302,7 +302,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Task that will fail',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -321,7 +321,7 @@ describe('AgentCoordinator Integration Tests', () => {
         .mockResolvedValueOnce({
           success: true,
           agentId: mockAgent1.id,
-          timestamp: Date.now()
+          timestamp: new Date()
         });
 
       const taskId = await coordinator.submitTask(
@@ -330,7 +330,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Task with retry',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         },
         'high' // High priority for retry
@@ -369,7 +369,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Performance test task',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );
@@ -389,7 +389,7 @@ describe('AgentCoordinator Integration Tests', () => {
         userId: 'user1',
         sessionId: 'session1',
         task: 'Success task',
-        timestamp: Date.now(),
+        timestamp: new Date(),
         metadata: {}
       });
 
@@ -399,7 +399,7 @@ describe('AgentCoordinator Integration Tests', () => {
       mockAgent1.mockExecuteTask.mockResolvedValueOnce({
         success: false,
         agentId: mockAgent1.id,
-        timestamp: Date.now(),
+        timestamp: new Date(),
         error: 'Task failed'
       });
 
@@ -407,7 +407,7 @@ describe('AgentCoordinator Integration Tests', () => {
         userId: 'user1',
         sessionId: 'session1',
         task: 'Failure task',
-        timestamp: Date.now(),
+        timestamp: new Date(),
         metadata: {}
       });
 
@@ -429,9 +429,9 @@ describe('AgentCoordinator Integration Tests', () => {
     test('should provide queue status', async () => {
       // Submit multiple tasks
       await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: Date.now(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: Date.now(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 3', timestamp: Date.now(), metadata: {} })
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: new Date(), metadata: {} }),
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: new Date(), metadata: {} }),
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 3', timestamp: new Date(), metadata: {} })
       ]);
 
       const queueStatus = coordinator.getQueueStatus();
@@ -440,8 +440,8 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should provide all active tasks', async () => {
       const taskIds = await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: Date.now(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: Date.now(), metadata: {} })
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: new Date(), metadata: {} }),
+        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: new Date(), metadata: {} })
       ]);
 
       const activeTasks = coordinator.getAllActiveTasks();
@@ -465,7 +465,7 @@ describe('AgentCoordinator Integration Tests', () => {
           userId: 'user1',
           sessionId: 'session1',
           task: 'Task with no specific requirements',
-          timestamp: Date.now(),
+          timestamp: new Date(),
           metadata: {}
         }
       );

@@ -235,7 +235,9 @@ describe('GeminiClient Integration Tests', () => {
       expect(response.content).toContain('Strategic analysis complete');
       expect(mockGoogleAI.getGenerativeModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          temperature: 0.8, // Higher temperature for strategic thinking
+          generationConfig: expect.objectContaining({
+            temperature: 0.8, // Higher temperature for strategic thinking
+          }),
           systemInstruction: expect.stringContaining('strategic planning expert')
         })
       );
@@ -294,7 +296,9 @@ describe('GeminiClient Integration Tests', () => {
       expect(response.content).toContain('Comprehensive project plan created');
       expect(mockGoogleAI.getGenerativeModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          temperature: 0.6, // Moderate temperature for structured planning
+          generationConfig: expect.objectContaining({
+            temperature: 0.6, // Moderate temperature for structured planning
+          }),
           systemInstruction: expect.stringContaining('expert project planner')
         })
       );
@@ -347,7 +351,9 @@ describe('GeminiClient Integration Tests', () => {
       expect(response.content).toContain('Architecture review completed');
       expect(mockGoogleAI.getGenerativeModel).toHaveBeenCalledWith(
         expect.objectContaining({
-          temperature: 0.5, // Lower temperature for technical analysis
+          generationConfig: expect.objectContaining({
+            temperature: 0.5, // Lower temperature for technical analysis
+          }),
           systemInstruction: expect.stringContaining('senior software architect')
         })
       );

@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { config } from '../../utils/config.js';
-import logger from '../../utils/logger.js';
+import { config } from '../../utils/config';
+import logger from '../../utils/logger';
 
 export interface AnthropicMessage {
   role: 'user' | 'assistant';
