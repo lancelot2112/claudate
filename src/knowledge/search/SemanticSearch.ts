@@ -6,8 +6,8 @@ import {
   IRelationalStore,
   QueryFilter,
   VectorSearchOptions
-} from '../../types/Knowledge.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import logger from '../../utils/logger';
 
 export interface SearchStrategy {
   name: 'semantic' | 'keyword' | 'hybrid';
@@ -459,6 +459,24 @@ export class SemanticSearchEngine {
         averageSearchTime: 0
       };
     }
+  }
+
+  public setVectorStore(vectorStore: IVectorStore): void {
+    this.vectorStore = vectorStore;
+    logger.info('Vector store updated in SemanticSearchEngine');
+  }
+
+  public getVectorStore(): IVectorStore {
+    return this.vectorStore;
+  }
+
+  public setRelationalStore(relationalStore: IRelationalStore): void {
+    this.relationalStore = relationalStore;
+    logger.info('Relational store updated in SemanticSearchEngine');
+  }
+
+  public getRelationalStore(): IRelationalStore | undefined {
+    return this.relationalStore;
   }
 }
 

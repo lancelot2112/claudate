@@ -7,12 +7,11 @@ import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSear
 import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem.js';
 import { ContextManager } from '../../../src/knowledge/context/ContextManager.js';
 import { ContextCompressor } from '../../../src/knowledge/context/ContextCompressor.js';
-import { KnowledgeCoordinator } from '../../../src/knowledge/coordination/KnowledgeCoordinator.js';
+import { KnowledgeCoordinator, CrossStoreQuery } from '../../../src/knowledge/coordination/KnowledgeCoordinator.js';
 import { 
   Document, 
   DocumentType,
-  KnowledgeQuery,
-  CrossStoreQuery 
+  KnowledgeQuery
 } from '../../../src/types/Knowledge.js';
 import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient.js';
 

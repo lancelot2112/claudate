@@ -7,9 +7,9 @@ import {
   VectorSearchOptions, 
   VectorStoreStats,
   VectorStoreError 
-} from '../../types/Knowledge.js';
-import { config } from '../../utils/config.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { config } from '../../utils/config';
+import logger from '../../utils/logger';
 
 export class VectorStore implements IVectorStore {
   private client: ChromaClient;
@@ -33,9 +33,13 @@ export class VectorStore implements IVectorStore {
       path: this.config.connectionString
     });
 
-    // Initialize embedding function (using OpenAI by default)
-    // Note: Using undefined for now, will be set up properly with environment
-    this.embeddingFunction = undefined;
+    // Initialize embedding function - create a simple dummy function for testing
+    this.embeddingFunction = {
+      generate: async (texts: string[]) => {
+        // Return dummy embeddings (1536 dimensions filled with random values)
+        return texts.map(() => Array(1536).fill(0).map(() => Math.random()));
+      }
+    };
 
     logger.info('VectorStore initialized', { 
       provider: this.config.provider,

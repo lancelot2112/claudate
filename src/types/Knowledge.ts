@@ -323,6 +323,7 @@ export interface ContextStats {
   newestEntry: Date;
 }
 
+
 // Error types
 export interface KnowledgeError extends Error {
   code: string;

@@ -5,11 +5,11 @@ import {
   ContextMessage,
   SearchResult,
   KnowledgeQuery
-} from '../../types/Knowledge.js';
-import { SemanticSearchEngine } from '../search/SemanticSearch.js';
-import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
-import { GeminiClient } from '../../integrations/ai/GeminiClient.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { SemanticSearchEngine } from '../search/SemanticSearch';
+import { AnthropicClient } from '../../integrations/ai/AnthropicClient';
+import { GeminiClient } from '../../integrations/ai/GeminiClient';
+import logger from '../../utils/logger';
 
 export interface RAGProvider {
   name: 'claude' | 'gemini';
@@ -475,6 +475,15 @@ Content: ${content}`;
   public updateConfig(newConfig: Partial<RAGConfig>): void {
     this.config = { ...this.config, ...newConfig };
     logger.info('RAG configuration updated', { newConfig });
+  }
+
+  public setSearchEngine(searchEngine: SemanticSearchEngine): void {
+    this.searchEngine = searchEngine;
+    logger.info('RAG search engine updated');
+  }
+
+  public getSearchEngine(): SemanticSearchEngine {
+    return this.searchEngine;
   }
 }
 
