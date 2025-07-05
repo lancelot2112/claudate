@@ -4,7 +4,6 @@ import {
   SearchResponse, 
   IVectorStore,
   IRelationalStore,
-  Document,
   QueryFilter,
   VectorSearchOptions
 } from '../../types/Knowledge.js';
@@ -59,8 +58,15 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
         throw new Error(`OpenAI API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data.data[0].embedding;
+      const data = await response.json() as { data: Array<{ embedding: number[] }> };
+      if (!data.data || data.data.length === 0) {
+        throw new Error('No embedding data received from OpenAI API');
+      }
+      const firstItem = data.data[0];
+      if (!firstItem) {
+        throw new Error('Invalid embedding response format');
+      }
+      return firstItem.embedding;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       logger.error('Failed to generate embedding', { error: errorMessage });
@@ -273,7 +279,7 @@ export class SemanticSearchEngine {
       return await this.relationalStore.searchDocuments(query);
     } catch (error) {
       logger.warn('Keyword search failed, continuing with semantic only', { 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       });
       return [];
     }
@@ -446,7 +452,7 @@ export class SemanticSearchEngine {
         averageSearchTime: 0 // Would need to track this separately
       };
     } catch (error) {
-      logger.error('Failed to get search stats', { error: error.message });
+      logger.error('Failed to get search stats', { error: error instanceof Error ? error.message : String(error) });
       return {
         totalDocuments: 0,
         indexHealth: 'unknown',

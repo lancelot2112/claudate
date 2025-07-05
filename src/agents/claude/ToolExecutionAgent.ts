@@ -3,7 +3,6 @@ import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
 import logger from '../../utils/logger.js';
 import { spawn, ChildProcess } from 'child_process';
-import { join, dirname } from 'path';
 
 export interface ToolExecutionTask {
   tool: string;
@@ -255,22 +254,7 @@ export class ToolExecutionAgent extends BaseAgent {
     concerns: string[];
     recommendations: string[];
   }> {
-    const prompt = `Analyze the safety and security implications of executing this tool:
-
-Tool: ${task.tool}
-Parameters: ${JSON.stringify(task.parameters, null, 2)}
-Working Directory: ${task.workingDirectory || 'current'}
-Environment: ${task.environment ? JSON.stringify(task.environment, null, 2) : 'default'}
-
-Consider:
-1. Potential security risks
-2. System modification impacts
-3. Data safety concerns
-4. Network access implications
-5. File system changes
-
-Provide risk level (low/medium/high) and specific concerns.`;
-
+    // Send analysis prompt for safety assessment
     const response = await this.anthropicClient.sendToolExecutionRequest(
       task.tool,
       task.parameters,
@@ -350,8 +334,15 @@ Provide risk level (low/medium/high) and specific concerns.`;
     const processId = `${this.id}-${Date.now()}`;
 
     return new Promise((resolve, reject) => {
-      const childProcess = spawn(toolConfig.command.split(' ')[0], [
-        ...toolConfig.command.split(' ').slice(1),
+      const commandParts = toolConfig.command.split(' ');
+      const command = commandParts[0];
+      if (!command) {
+        reject(new Error('Invalid command configuration'));
+        return;
+      }
+
+      const childProcess = spawn(command, [
+        ...commandParts.slice(1),
         ...args
       ], {
         cwd: task.workingDirectory || process.cwd(),
@@ -364,11 +355,11 @@ Provide risk level (low/medium/high) and specific concerns.`;
       let stdout = '';
       let stderr = '';
 
-      childProcess.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
 
-      childProcess.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data: Buffer) => {
         stderr += data.toString();
       });
 
@@ -378,7 +369,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
         reject(new Error(`Tool execution timed out after ${toolConfig.timeoutMs}ms`));
       }, task.timeout || toolConfig.timeoutMs);
 
-      childProcess.on('close', (code) => {
+      childProcess.on('close', (code: number | null) => {
         clearTimeout(timeout);
         this.runningProcesses.delete(processId);
         
@@ -395,7 +386,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
         });
       });
 
-      process.on('error', (error) => {
+      childProcess.on('error', (error: Error) => {
         clearTimeout(timeout);
         this.runningProcesses.delete(processId);
         reject(error);
@@ -484,12 +475,15 @@ Provide risk level (low/medium/high) and specific concerns.`;
   }
 
   public async stopAllProcesses(): Promise<void> {
-    for (const [processId, process] of this.runningProcesses) {
+    for (const [processId, childProcess] of this.runningProcesses) {
       try {
         childProcess.kill('SIGTERM');
         logger.info('Stopped running process', { processId, agentId: this.id });
       } catch (error) {
-        logger.error('Failed to stop process', { processId, error: error.message });
+        logger.error('Failed to stop process', { 
+          processId, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
       }
     }
     this.runningProcesses.clear();
@@ -514,7 +508,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
     ];
   }
 
-  public async shutdown(): Promise<void> {
+  public override async shutdown(): Promise<void> {
     await this.stopAllProcesses();
     await super.shutdown();
   }

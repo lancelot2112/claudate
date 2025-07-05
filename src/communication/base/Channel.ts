@@ -5,10 +5,9 @@ import {
   MessageDeliveryResult, 
   ChannelCapability, 
   DeliveryStatus,
-  ChannelConfig,
-  RetryPolicy
+  ChannelConfig
 } from '@/types/Communication';
-import { communicationLogger, logCommunicationEvent } from '@/utils/logger';
+import { communicationLogger, logCommunication } from '@/utils/logger';
 
 export abstract class BaseChannel extends EventEmitter implements IChannelProvider {
   protected config: ChannelConfig;
@@ -38,7 +37,9 @@ export abstract class BaseChannel extends EventEmitter implements IChannelProvid
     }
 
     try {
-      logCommunicationEvent(this.id, 'initialize', { channel: this.name });
+      logCommunication(this.id, 'incoming', 'Channel initialize', { 
+        channel: this.name 
+      });
       await this.doInitialize();
       this.isInitialized = true;
       
@@ -61,7 +62,7 @@ export abstract class BaseChannel extends EventEmitter implements IChannelProvid
     }
 
     try {
-      logCommunicationEvent(this.id, 'shutdown', { channel: this.name });
+      logCommunication(this.id, 'outgoing', 'Channel shutdown', { channel: this.name });
       await this.doShutdown();
       this.isInitialized = false;
       
@@ -104,7 +105,7 @@ export abstract class BaseChannel extends EventEmitter implements IChannelProvid
     }
 
     try {
-      logCommunicationEvent(this.id, 'sendMessage', {
+      logCommunication(this.id, 'outgoing', 'Sending message', {
         messageId: message.id,
         channel: message.channel,
         urgency: message.urgency,
@@ -163,7 +164,7 @@ export abstract class BaseChannel extends EventEmitter implements IChannelProvid
       const message = await this.doReceiveMessage();
       
       if (message) {
-        logCommunicationEvent(this.id, 'receiveMessage', {
+        logCommunication(this.id, 'incoming', 'Received message', {
           messageId: message.id,
           channel: message.channel,
           type: message.type,

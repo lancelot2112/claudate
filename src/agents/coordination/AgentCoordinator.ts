@@ -60,8 +60,6 @@ export class AgentCoordinator extends EventEmitter {
   }
 
   public registerAgent(agent: BaseAgent): void {
-    const capabilities = agent.getCapabilities();
-    
     const registration: AgentRegistration = {
       agent,
       capabilities: [], // Will be populated from getCapabilities()
@@ -408,7 +406,7 @@ export class AgentCoordinator extends EventEmitter {
         logger.error('Handoff execution failed', { 
           taskId: request.taskId, 
           newAgentId, 
-          error: error.message 
+          error: error instanceof Error ? error.message : String(error) 
         });
       }
     }

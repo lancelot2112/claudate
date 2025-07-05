@@ -364,7 +364,8 @@ export class IngestionPipeline extends EventEmitter {
   private async checkForDuplicate(content: string): Promise<boolean> {
     // Simple hash-based deduplication
     const crypto = await import('crypto');
-    const hash = crypto.createHash('sha256').update(content).digest('hex');
+    // Hash is computed but not used in this simple implementation
+    crypto.createHash('sha256').update(content).digest('hex');
     
     // In a real implementation, you'd check against stored hashes
     // For now, we'll just return false
@@ -384,9 +385,9 @@ export class IngestionPipeline extends EventEmitter {
       }
     }
 
-    // Fall back to filename
-    const path = await import('path');
-    return path.basename(source, path.extname(source));
+    // Fall back to filename - use sync path functions
+    const pathModule = require('path');
+    return pathModule.basename(source, pathModule.extname(source));
   }
 
   private determineDocumentType(mimeType: string): DocumentType {

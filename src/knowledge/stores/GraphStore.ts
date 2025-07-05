@@ -74,7 +74,7 @@ export class GraphStore implements IGraphStore {
     try {
       return this.isInitialized && this.nodes.size >= 0;
     } catch (error) {
-      logger.error('GraphStore health check failed', { error: error.message });
+      logger.error('GraphStore health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -263,7 +263,7 @@ export class GraphStore implements IGraphStore {
       const results: GraphResult[] = [];
       const queryLower = query.toLowerCase();
 
-      for (const [nodeId, node] of this.nodes) {
+      for (const [, node] of this.nodes) {
         let matches = false;
 
         // Check if query matches node type
@@ -272,7 +272,7 @@ export class GraphStore implements IGraphStore {
         }
 
         // Check if query matches any property values
-        for (const [key, value] of Object.entries(node.properties)) {
+        for (const [, value] of Object.entries(node.properties)) {
           if (typeof value === 'string' && value.toLowerCase().includes(queryLower)) {
             matches = true;
             break;
@@ -533,7 +533,7 @@ export class GraphStore implements IGraphStore {
     }
 
     // Property matches
-    for (const [key, value] of Object.entries(node.properties)) {
+    for (const [, value] of Object.entries(node.properties)) {
       if (typeof value === 'string') {
         const valueLower = value.toLowerCase();
         if (valueLower === query) {
@@ -577,10 +577,10 @@ export class GraphStore implements IGraphStore {
         file: this.config.persistenceFile 
       });
     } catch (error) {
-      if (error.code === 'ENOENT') {
+      if (error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT') {
         logger.info('No persistence file found, starting with empty graph');
       } else {
-        logger.error('Failed to load graph data from disk', { error: error.message });
+        logger.error('Failed to load graph data from disk', { error: error instanceof Error ? error.message : String(error) });
       }
     }
   }
@@ -620,7 +620,7 @@ export class GraphStore implements IGraphStore {
         file: this.config.persistenceFile 
       });
     } catch (error) {
-      logger.error('Failed to save graph data to disk', { error: error.message });
+      logger.error('Failed to save graph data to disk', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 

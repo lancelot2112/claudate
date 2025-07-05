@@ -193,7 +193,7 @@ export class ContextCompressor {
       } catch (error) {
         logger.warn('Failed to compress individual context entry', { 
           entryId: entry.id,
-          error: error.message 
+          error: error instanceof Error ? error.message : String(error)
         });
         results.push({ entry, result: null });
       }
@@ -236,7 +236,7 @@ export class ContextCompressor {
       };
     } catch (error) {
       logger.warn('Semantic compression failed, falling back to statistical', { 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       return await this.statisticalCompression(content);
     }

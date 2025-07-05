@@ -151,7 +151,7 @@ export class ExecutiveBriefProcessor extends BaseContentProcessor {
   private extractSummary(content: string): string {
     // Simple summary extraction - first sentence or first 100 characters
     const firstSentence = content.split('.')[0];
-    if (firstSentence.length < 100) {
+    if (firstSentence && firstSentence.length < 100) {
       return firstSentence + '.';
     }
     

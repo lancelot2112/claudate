@@ -79,7 +79,6 @@ export interface UsagePattern {
 export class CostManager extends EventEmitter {
   private costEntries: Map<string, CostEntry> = new Map();
   private budgets: Map<string, CostBudget> = new Map();
-  private rateLimits: Map<string, { requests: number; resetTime: Date }> = new Map();
   private costLimits: CostLimits;
   private dailySpend: Map<string, number> = new Map(); // date -> total cost
   private userSpend: Map<string, Map<string, number>> = new Map(); // userId -> date -> cost
@@ -466,26 +465,29 @@ export class CostManager extends EventEmitter {
     for (const [key, entries] of serviceModels) {
       const [service, model] = key.split('-');
       
-      if (entries.length > 0) {
-        const totalCost = entries.reduce((sum, e) => sum + e.cost, 0);
-        const averageDailyCost = totalCost / this.getUniqueDays(entries).length;
-        
-        patterns.push({
-          service,
-          model,
-          averageDailyCost,
-          peakUsageHours: this.calculatePeakHours(entries),
-          efficiency: {
-            tokensPerRequest: this.calculateAverageTokens(entries),
-            costPerTask: this.calculateCostPerTask(entries),
-            errorRate: 0 // Would need error tracking
-          },
-          trends: {
-            weeklyGrowth: this.calculateGrowthRate(entries, 'week'),
-            monthlyGrowth: this.calculateGrowthRate(entries, 'month')
-          }
-        });
+      // Ensure service and model are defined
+      if (!service || !model || entries.length === 0) {
+        continue;
       }
+      
+      const totalCost = entries.reduce((sum, e) => sum + e.cost, 0);
+      const averageDailyCost = totalCost / this.getUniqueDays(entries).length;
+      
+      patterns.push({
+        service,
+        model,
+        averageDailyCost,
+        peakUsageHours: this.calculatePeakHours(entries),
+        efficiency: {
+          tokensPerRequest: this.calculateAverageTokens(entries),
+          costPerTask: this.calculateCostPerTask(entries),
+          errorRate: 0 // Would need error tracking
+        },
+        trends: {
+          weeklyGrowth: this.calculateGrowthRate(entries, 'week'),
+          monthlyGrowth: this.calculateGrowthRate(entries, 'month')
+        }
+      });
     }
 
     return patterns;

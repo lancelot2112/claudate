@@ -2,7 +2,8 @@ import { BaseAgent } from '@/agents/base/Agent';
 import { 
   AgentConfig, 
   AgentContext, 
-  AgentResponse, 
+  AgentResponse,
+  AgentResult,
   Task,
   ExecutiveBrief,
   RoutingDecision,
@@ -91,7 +92,11 @@ export class PersonalAssistantAgent extends BaseAgent {
     }
   }
 
-  protected async onTaskAssigned(task: Task): Promise<void> {
+  // Implementation of abstract method from BaseAgent
+  public async executeTask(context: AgentContext): Promise<AgentResult> {
+    this.updateStatus('processing');
+    
+    const { task } = context;
     logAgentAction(this.id, 'taskAssigned', {
       taskId: task.id,
       taskType: task.type,
@@ -99,23 +104,44 @@ export class PersonalAssistantAgent extends BaseAgent {
     });
 
     try {
+      let result: any;
+      
       switch (task.type) {
         case 'generate_executive_brief':
-          await this.generateExecutiveBrief(task);
+          result = await this.generateExecutiveBrief(task);
           break;
         case 'route_message':
-          await this.routeMessage(task);
+          result = await this.routeMessage(task);
           break;
         case 'analyze_communication':
-          await this.analyzeCommunication(task);
+          result = await this.analyzeCommunication(task);
+          break;
+        case 'message_analysis':
+          result = await this.analyzeMessage(task.input, context);
           break;
         default:
           throw new Error(`Unknown task type: ${task.type}`);
       }
 
-      this.completeTask(task.id, task.output);
+      this.updateStatus('completed');
+      this.completeTask(task.id, result);
+      
+      return {
+        success: true,
+        agentId: this.id,
+        timestamp: Date.now(),
+        metadata: { result }
+      };
     } catch (error) {
+      this.updateStatus('failed');
       this.failTask(task.id, (error as Error).message);
+      
+      return {
+        success: false,
+        agentId: this.id,
+        timestamp: Date.now(),
+        error: error instanceof Error ? error.message : String(error)
+      };
     }
   }
 
@@ -345,6 +371,30 @@ export class PersonalAssistantAgent extends BaseAgent {
     task.output = analysis;
   }
 
+  // Implementation of abstract method from BaseAgent
+  public async getCapabilities(): Promise<string[]> {
+    return [
+      'message_analysis',
+      'routing_decision',
+      'executive_brief_generation',
+      'communication_analysis',
+      'priority_management',
+      'context_awareness',
+      'multi_channel_support'
+    ];
+  }
+
+  // Task management methods
+  private completeTask(taskId: string, output: any): void {
+    // Emit task completion event
+    this.emit('task-completed', { taskId, output, timestamp: Date.now() });
+  }
+
+  private failTask(taskId: string, error: string): void {
+    // Emit task failure event
+    this.emit('task-failed', { taskId, error, timestamp: Date.now() });
+  }
+
   // Helper methods
   private loadUserConfiguration(): void {
     this.userConfig = loadPrivateConfig();
@@ -401,7 +451,8 @@ export class PersonalAssistantAgent extends BaseAgent {
   private getChannelBreakdown(messages: BaseMessage[]): Record<string, number> {
     const breakdown: Record<string, number> = {};
     for (const message of messages) {
-      breakdown[message.channel] = (breakdown[message.channel] || 0) + 1;
+      const channel = message.channel || 'unknown';
+      breakdown[channel] = (breakdown[channel] || 0) + 1;
     }
     return breakdown;
   }

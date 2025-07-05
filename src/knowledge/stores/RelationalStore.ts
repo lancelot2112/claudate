@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import {
   IRelationalStore,
   Document,
@@ -97,7 +97,7 @@ export class RelationalStore implements IRelationalStore {
         client.release();
       }
     } catch (error) {
-      logger.error('RelationalStore health check failed', { error: error.message });
+      logger.error('RelationalStore health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

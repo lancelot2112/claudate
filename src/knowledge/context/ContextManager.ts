@@ -237,9 +237,12 @@ export class ContextManager implements IContextManager {
       // Get from hot tier (Redis)
       const hotKeys = await this.redisClient.keys(`context:${sessionId}:*`);
       for (const key of hotKeys.slice(0, limit)) {
-        const entry = await this.getFromHotTier(key.split(':')[2]);
-        if (entry) {
-          entries.push(entry);
+        const keyParts = key.split(':');
+        if (keyParts.length >= 3 && keyParts[2]) {
+          const entry = await this.getFromHotTier(keyParts[2]);
+          if (entry) {
+            entries.push(entry);
+          }
         }
       }
 
@@ -389,7 +392,7 @@ export class ContextManager implements IContextManager {
           } catch (compressionError) {
             logger.warn('Failed to compress context entry', { 
               id: row.id, 
-              error: compressionError.message 
+              error: compressionError instanceof Error ? compressionError.message : String(compressionError)
             });
           }
         }
@@ -661,7 +664,7 @@ export class ContextManager implements IContextManager {
         compressed: metadata.compressed
       };
     } catch (error) {
-      logger.error('Failed to get from hot tier', { id, error: error.message });
+      logger.error('Failed to get from hot tier', { id, error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }
@@ -791,7 +794,7 @@ export class ContextManager implements IContextManager {
     } catch (error) {
       logger.error('Failed to promote context to hot tier', { 
         id: entry.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -830,26 +833,29 @@ export class ContextManager implements IContextManager {
         if (!metadataStr) continue;
 
         const metadata = JSON.parse(metadataStr);
-        const id = key.split(':')[2];
+        const keyParts = key.split(':');
+        if (keyParts.length >= 3 && keyParts[2]) {
+          const id = keyParts[2];
 
-        // Check if should be migrated (low access count and old enough)
-        if (metadata.accessCount <= this.config.migration.hotToWarmThreshold) {
-          const entry = await this.getFromHotTier(id);
-          if (entry) {
-            entry.tier = 'warm';
-            const contentString = JSON.stringify(entry.content);
-            await this.storeInWarmTier(entry, contentString);
+          // Check if should be migrated (low access count and old enough)
+          if (metadata.accessCount <= this.config.migration.hotToWarmThreshold) {
+            const entry = await this.getFromHotTier(id);
+            if (entry) {
+              entry.tier = 'warm';
+              const contentString = JSON.stringify(entry.content);
+              await this.storeInWarmTier(entry, contentString);
 
-            // Remove from Redis
-            await this.redisClient.del(`context:entry:${id}`);
-            await this.redisClient.del(`context:meta:${id}`);
-            await this.redisClient.del(`context:${entry.sessionId}:${id}`);
+              // Remove from Redis
+              await this.redisClient.del(`context:entry:${id}`);
+              await this.redisClient.del(`context:meta:${id}`);
+              await this.redisClient.del(`context:${entry.sessionId}:${id}`);
 
-            migratedCount++;
+              migratedCount++;
+            }
           }
         }
       } catch (error) {
-        logger.error('Error migrating hot to warm', { key, error: error.message });
+        logger.error('Error migrating hot to warm', { key, error: error instanceof Error ? error.message : String(error) });
       }
     }
 
@@ -887,7 +893,7 @@ export class ContextManager implements IContextManager {
           });
         }
       } catch (error) {
-        logger.error('Automatic context migration failed', { error: error.message });
+        logger.error('Automatic context migration failed', { error: error instanceof Error ? error.message : String(error) });
       }
     }, this.config.migration.migrationInterval * 1000);
   }

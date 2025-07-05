@@ -192,7 +192,7 @@ export class RAGSystem {
 
       return searchResponse.results;
     } catch (error) {
-      logger.error('Document retrieval failed', { error: error.message });
+      logger.error('Document retrieval failed', { error: error instanceof Error ? error.message : String(error) });
       return [];
     }
   }
@@ -261,6 +261,8 @@ export class RAGSystem {
     
     for (let i = 0; i < documents.length; i++) {
       const doc = documents[i];
+      if (!doc) continue; // Skip undefined documents
+      
       const docText = this.formatDocumentForContext(doc, i + 1);
       
       if (totalLength + docText.length > this.config.maxContextLength) {
@@ -337,7 +339,7 @@ Content: ${content}`;
       } catch (error) {
         logger.warn('AI provider failed, trying next', { 
           provider: provider.name, 
-          error: error.message 
+          error: error instanceof Error ? error.message : String(error)
         });
         continue;
       }

@@ -1,7 +1,7 @@
 import { BaseAgent } from '../base/Agent.js';
 import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { GeminiClient, GeminiResponse } from '../../integrations/ai/GeminiClient.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 export interface PlanningTask {
   type: 'project_plan' | 'sprint_plan' | 'release_plan' | 'roadmap' | 'milestone_plan';
@@ -155,7 +155,7 @@ export class PlanningAgent extends BaseAgent {
       this.updateMetrics({
         taskType: task.type,
         scope: task.scope,
-        duration: Date.now() - context.timestamp
+        duration: Date.now() - context.timestamp.getTime()
       });
 
       return result;
@@ -163,12 +163,12 @@ export class PlanningAgent extends BaseAgent {
       this.updateStatus('failed');
       logger.error('PlanningAgent task failed', { 
         agentId: this.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         agentId: this.id,
         timestamp: Date.now()
       };
@@ -224,11 +224,13 @@ Please provide:
 8. Quality assurance approach
 9. Alternative approaches if applicable`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      task.objective,
-      task.resources.constraints,
-      this.formatTimeline(task.timeline)
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert project planner and architect. Create comprehensive, executable plans with clear phases, milestones, resource requirements, risk assessment, and success criteria.'
+    });
 
     const parsedResult = this.parsePlanningResponse(response, task.type);
 
@@ -270,11 +272,13 @@ Please provide:
 7. Sprint success metrics
 8. Potential blockers and solutions`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      `Sprint planning for: ${task.objective}`,
-      task.resources.constraints,
-      task.timeline.duration
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert agile coach and sprint planner. Create detailed sprint plans with story breakdown, capacity planning, and risk mitigation.'
+    });
 
     const parsedResult = this.parsePlanningResponse(response, task.type);
 
@@ -312,11 +316,13 @@ Please provide:
 7. Post-release monitoring plan
 8. Success metrics and KPIs`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      `Release planning for: ${task.objective}`,
-      task.resources.constraints,
-      this.formatTimeline(task.timeline)
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert release manager and product manager. Create comprehensive release plans with phased rollouts, testing strategies, and risk mitigation.'
+    });
 
     const parsedResult = this.parsePlanningResponse(response, task.type);
 
@@ -357,11 +363,13 @@ Please provide:
 8. Risk assessment and alternatives
 9. Investment priorities`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      `Strategic roadmap for: ${task.objective}`,
-      task.resources.constraints,
-      this.formatTimeline(task.timeline)
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert strategic planner and product strategist. Create comprehensive roadmaps with strategic themes, milestone breakdowns, and investment priorities.'
+    });
 
     const parsedResult = this.parsePlanningResponse(response, task.type);
 
@@ -400,11 +408,13 @@ Please provide:
 7. Escalation procedures
 8. Milestone review and approval process`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      `Milestone planning for: ${task.objective}`,
-      task.resources.constraints,
-      this.formatTimeline(task.timeline)
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert project manager and milestone planner. Create detailed milestone-based plans with clear criteria, dependencies, and tracking mechanisms.'
+    });
 
     const parsedResult = this.parsePlanningResponse(response, task.type);
 
@@ -515,13 +525,18 @@ Please provide:
 4. Risk assessment of changes
 5. Implementation approach for optimization`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      'Plan optimization',
-      constraints,
-      'Based on current plan timeline'
-    );
+    // Send optimization request to Gemini
+    await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert plan optimizer and efficiency consultant. Analyze plans and provide optimizations with clear rationale and trade-off analysis.'
+    });
 
-    // Parse optimization response
+    // TODO: Parse optimization response and extract improvements
+    // For now, return the current plan with placeholder improvements
+    // const parsedResponse = this.parseOptimizationResponse(response);
     return {
       optimizedPlan: currentPlan, // Would be parsed from response
       improvements: [],

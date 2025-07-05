@@ -85,7 +85,7 @@ export class VectorStore implements IVectorStore {
       logger.debug('VectorStore health check passed', { documentCount: count });
       return true;
     } catch (error) {
-      logger.error('VectorStore health check failed', { error: error.message });
+      logger.error('VectorStore health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
@@ -261,9 +261,9 @@ export class VectorStore implements IVectorStore {
       const {
         k = 10,
         threshold = 0.7,
-        filter,
-        includeMetadata = true,
-        includeScores = true
+        filter
+        // includeMetadata = true,
+        // includeScores = true
       } = options;
 
       const results = await this.collection.query({
@@ -341,9 +341,9 @@ export class VectorStore implements IVectorStore {
       const {
         k = 10,
         threshold = 0.7,
-        filter,
-        includeMetadata = true,
-        includeScores = true
+        filter
+        // includeMetadata = true,
+        // includeScores = true
       } = options;
 
       const results = await this.collection.query({
@@ -471,6 +471,10 @@ export class VectorStore implements IVectorStore {
           const document = results.documents[i];
           const metadata = results.metadatas[i] as any;
           const id = results.ids[i];
+
+          if (!id || !document) {
+            continue; // Skip invalid entries
+          }
 
           documents.push({
             id,

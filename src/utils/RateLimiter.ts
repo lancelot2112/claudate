@@ -471,6 +471,8 @@ export class RateLimiter extends EventEmitter {
     for (const [key, entry] of this.limits) {
       // Extract rule and identifier from key
       const [ruleId, ...identifierParts] = key.split(':');
+      if (!ruleId) continue; // Skip entries without valid rule ID
+      
       const identifier = identifierParts.join(':');
       const rule = this.rules.get(ruleId);
       

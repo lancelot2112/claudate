@@ -1,7 +1,7 @@
 import { BaseAgent } from '../base/Agent.js';
 import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { GeminiClient, GeminiResponse } from '../../integrations/ai/GeminiClient.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 export interface StrategicTask {
   type: 'architecture_review' | 'technology_selection' | 'risk_assessment' | 'scalability_analysis' | 'strategic_planning';
@@ -128,7 +128,7 @@ export class StrategicAgent extends BaseAgent {
         taskType: task.type,
         scope: task.scope,
         domain: task.domain,
-        duration: Date.now() - context.timestamp
+        duration: Date.now() - context.timestamp.getTime()
       });
 
       return result;
@@ -136,12 +136,12 @@ export class StrategicAgent extends BaseAgent {
       this.updateStatus('failed');
       logger.error('StrategicAgent task failed', { 
         agentId: this.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error)
       });
       
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         agentId: this.id,
         timestamp: Date.now()
       };
@@ -181,11 +181,13 @@ Please provide:
 7. Security implications
 8. Cost implications`;
 
-    const response = await this.geminiClient.sendArchitecturalReview(
-      task.currentState || 'New system design',
-      task.requirements,
-      task.constraints
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert software architect and technology strategist. Provide comprehensive architecture reviews with detailed analysis, alternatives, and implementation guidance.'
+    });
 
     const parsedResult = this.parseStrategicResponse(response, task.type);
 
@@ -368,11 +370,13 @@ Provide:
 9. Change management approach
 10. Investment priorities`;
 
-    const response = await this.geminiClient.sendPlanningRequest(
-      `Strategic planning for ${task.scope} transformation`,
-      task.constraints,
-      task.timeline
-    );
+    const response = await this.geminiClient.sendMessage({
+      messages: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      systemInstruction: 'You are an expert strategic consultant and transformation leader. Create comprehensive strategic plans with clear phases, metrics, and implementation guidance.'
+    });
 
     const parsedResult = this.parseStrategicResponse(response, task.type);
 

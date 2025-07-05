@@ -1,20 +1,20 @@
 import { EventEmitter } from 'events';
 import { 
   ChannelRouter, 
-  CommunicationChannel, 
+  CommunicationChannel as CommunicationChannelConfig, 
   ChannelMessage, 
   MessageDeliveryResult, 
   CommunicationPreference,
   DeliveryStatus,
   BulkMessageJob
 } from '@/types/Communication';
-import { BaseMessage } from '@/types/common';
+import { BaseMessage, CommunicationChannel } from '@/types/common';
 import { IChannelProvider } from '@/types/Communication';
 import { communicationLogger, logCommunication } from '@/utils/logger';
 
 export class CommunicationRouter extends EventEmitter implements ChannelRouter {
   private channels: Map<string, IChannelProvider> = new Map();
-  private channelConfigs: Map<string, CommunicationChannel> = new Map();
+  private channelConfigs: Map<string, CommunicationChannelConfig> = new Map();
   private healthCheckInterval: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -57,7 +57,10 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
     communicationLogger.info('Communication Router shutdown complete');
   }
 
-  public async registerChannel(channel: IChannelProvider, config: CommunicationChannel): Promise<void> {
+  public async registerChannel(channel: IChannelProvider, config: CommunicationChannelConfig): Promise<void> {
+    if (!config.id) {
+      throw new Error('Channel configuration must have an ID');
+    }
     const channelId = config.id;
     
     try {
@@ -73,8 +76,8 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
       
       communicationLogger.info(`Channel registered successfully`, {
         channelId,
-        channelName: config.name,
-        capabilities: config.capabilities,
+        channelName: config.name || 'Unknown',
+        capabilities: config.capabilities || [],
       });
       
       this.emit('channelRegistered', channelId, config);
@@ -109,8 +112,8 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
   public async selectChannel(
     message: BaseMessage,
     preferences: CommunicationPreference[],
-    availableChannels?: CommunicationChannel[]
-  ): Promise<CommunicationChannel | null> {
+    availableChannels?: CommunicationChannelConfig[]
+  ): Promise<CommunicationChannelConfig | null> {
     const channels = availableChannels || Array.from(this.channelConfigs.values());
     
     // Filter channels based on preferences and message requirements
@@ -127,7 +130,7 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
       }
       
       // Check if channel has required capabilities
-      if (message.type === 'media' && !channel.capabilities.includes('media_messaging')) {
+      if (message.type === 'media' && !channel.capabilities?.includes('media_messaging')) {
         return false;
       }
       
@@ -162,10 +165,10 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
 
   public async routeMessage(
     message: ChannelMessage,
-    targetChannel?: CommunicationChannel
+    targetChannel?: CommunicationChannelConfig
   ): Promise<MessageDeliveryResult> {
     try {
-      let channel: CommunicationChannel | null = targetChannel || null;
+      let channel: CommunicationChannelConfig | null = targetChannel || null;
       
       // If no target channel specified, select one
       if (!channel) {
@@ -194,14 +197,14 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
       }
 
       // Update message with channel info
-      message.channel = channel.id;
+      message.channel = this.channelConfigToType(channel);
       message.channelSpecificData = {
         ...message.channelSpecificData,
         targetChannel: channel.id,
         routedAt: new Date(),
       };
 
-      logCommunication('router', 'routeMessage', {
+      logCommunication('router', 'outgoing', 'Routing message', {
         messageId: message.id,
         targetChannel: channel.id,
         urgency: message.urgency,
@@ -316,7 +319,7 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
     for (const message of job.messages) {
       try {
         // Select target channel if not specified
-        let targetChannel: CommunicationChannel | null = null;
+        let targetChannel: CommunicationChannelConfig | null = null;
         
         if (job.targetChannels.length === 1 && job.targetChannels[0]) {
           targetChannel = this.channelConfigs.get(job.targetChannels[0]) || null;
@@ -365,10 +368,10 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
 
   // Helper methods
   private selectBestChannel(
-    channels: CommunicationChannel[],
+    channels: CommunicationChannelConfig[],
     message: BaseMessage,
     preferences: CommunicationPreference[]
-  ): CommunicationChannel {
+  ): CommunicationChannelConfig {
     // Score channels based on various factors
     const scoredChannels = channels.map(channel => {
       let score = 0;
@@ -381,18 +384,18 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
       
       // Urgency matching
       if (message.urgency === 'critical') {
-        if (channel.capabilities.includes('real_time')) {
+        if (channel.capabilities?.includes('real_time')) {
           score += 5;
         }
       }
       
       // Media support
-      if (message.type === 'media' && channel.capabilities.includes('media_messaging')) {
+      if (message.type === 'media' && channel.capabilities?.includes('media_messaging')) {
         score += 3;
       }
       
       // Rate limit availability (simplified)
-      if (channel.rateLimits.maxPerMinute > 10) {
+      if (channel.rateLimits?.maxPerMinute && channel.rateLimits.maxPerMinute > 10) {
         score += 2;
       }
       
@@ -401,7 +404,8 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
 
     // Sort by score and return the best one
     scoredChannels.sort((a, b) => b.score - a.score);
-    return scoredChannels[0]?.channel || channels[0];
+    const bestChannel = scoredChannels[0]?.channel;
+    return bestChannel || channels[0]!;
   }
 
   private isWithinTimeWindow(preference: CommunicationPreference): boolean {
@@ -515,6 +519,19 @@ export class CommunicationRouter extends EventEmitter implements ChannelRouter {
       registered: this.channels.has(channelId),
       active: config?.isActive || false,
     };
+  }
+
+  // Helper methods for type conversion
+  private channelConfigToType(config: CommunicationChannelConfig): CommunicationChannel {
+    const typeMap: Record<string, CommunicationChannel> = {
+      'sms': 'sms',
+      'mms': 'mms', 
+      'email': 'email',
+      'google_chat': 'google-chat',
+      'voice': 'voice',
+      'video': 'video'
+    };
+    return typeMap[config.type] || 'sms';
   }
 }
 

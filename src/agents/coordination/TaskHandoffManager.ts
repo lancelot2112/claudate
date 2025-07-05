@@ -440,7 +440,7 @@ export class TaskHandoffManager extends EventEmitter {
       
       logger.error('Handoff execution failed', {
         taskId: handoffContext.taskId,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         duration
       });
 
@@ -451,12 +451,12 @@ export class TaskHandoffManager extends EventEmitter {
         taskId: handoffContext.taskId,
         fromAgent: handoffContext.fromAgentId,
         toAgent: handoffContext.toAgentId,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       return {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }

@@ -1,10 +1,8 @@
 import { 
   IDocumentProcessor, 
   ProcessedDocument, 
-  Document, 
   DocumentChunk, 
   DocumentMetadata,
-  DocumentType,
   DocumentProcessingError 
 } from '../../types/Knowledge.js';
 import logger from '../../utils/logger.js';
@@ -33,12 +31,14 @@ export abstract class BaseDocumentProcessor implements IDocumentProcessor {
       const chunkContent = chunkWords.join(' ');
       
       if (chunkContent.trim().length > 0) {
+        const firstWord = chunkWords[0];
+        const lastWord = chunkWords[chunkWords.length - 1];
         const chunk: DocumentChunk = {
           id: uuidv4(),
           documentId: '', // Will be set by the document processor
           content: chunkContent,
-          startIndex: content.indexOf(chunkWords[0]),
-          endIndex: content.indexOf(chunkWords[chunkWords.length - 1]) + chunkWords[chunkWords.length - 1].length,
+          startIndex: firstWord ? content.indexOf(firstWord) : 0,
+          endIndex: lastWord ? content.indexOf(lastWord) + lastWord.length : chunkContent.length,
           metadata: {
             chunkIndex: chunks.length,
             totalChunks: 0, // Will be updated after all chunks are created
@@ -333,6 +333,8 @@ export class CodeDocumentProcessor extends BaseDocumentProcessor {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      if (!line) continue; // Skip undefined lines
+      
       const lineSize = line.length;
 
       // Check if this line starts a new function/class/method
@@ -341,13 +343,15 @@ export class CodeDocumentProcessor extends BaseDocumentProcessor {
       // If current chunk is getting too large and we hit a new block, finalize current chunk
       if (currentChunkSize + lineSize > this.chunkSize && currentChunk.length > 0 && isNewBlock) {
         if (currentChunk.length > 0) {
+          const firstLine = currentChunk[0];
+          const lastLine = currentChunk[currentChunk.length - 1];
           const chunkContent = currentChunk.join('\n');
           chunks.push({
             id: uuidv4(),
             documentId: '',
             content: chunkContent,
-            startIndex: content.indexOf(currentChunk[0]),
-            endIndex: content.indexOf(currentChunk[currentChunk.length - 1]) + currentChunk[currentChunk.length - 1].length,
+            startIndex: firstLine ? content.indexOf(firstLine) : 0,
+            endIndex: lastLine ? content.indexOf(lastLine) + lastLine.length : chunkContent.length,
             metadata: {
               chunkIndex,
               totalChunks: 0,
@@ -370,13 +374,15 @@ export class CodeDocumentProcessor extends BaseDocumentProcessor {
 
     // Add the last chunk if it exists
     if (currentChunk.length > 0) {
+      const firstLine = currentChunk[0];
+      const lastLine = currentChunk[currentChunk.length - 1];
       const chunkContent = currentChunk.join('\n');
       chunks.push({
         id: uuidv4(),
         documentId: '',
         content: chunkContent,
-        startIndex: content.indexOf(currentChunk[0]),
-        endIndex: content.indexOf(currentChunk[currentChunk.length - 1]) + currentChunk[currentChunk.length - 1].length,
+        startIndex: firstLine ? content.indexOf(firstLine) : 0,
+        endIndex: lastLine ? content.indexOf(lastLine) + lastLine.length : chunkContent.length,
         metadata: {
           chunkIndex,
           totalChunks: 0,

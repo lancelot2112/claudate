@@ -273,9 +273,10 @@ export class ChartGenerator {
     }
   }
 
-  private static getExecutiveColors(labels: string[]): string[] {
-    const colors = Object.values(this.EXECUTIVE_COLORS);
-    return labels.map((_, index) => colors[index % colors.length]);
+  private static getExecutiveColors(labels: (string | undefined)[]): string[] {
+    const colors: string[] = Object.values(this.EXECUTIVE_COLORS);
+    const validLabels = labels.filter((label): label is string => label !== undefined);
+    return validLabels.map((_, index) => colors[index % colors.length]!);
   }
 
   private static getStatusColors(statuses: string[]): string[] {

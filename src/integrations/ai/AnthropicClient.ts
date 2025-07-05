@@ -204,7 +204,7 @@ Provide:
   }
 
   private trackCost(cost: number): void {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0]!; // This is guaranteed to exist
     const currentCost = this.costTracker.get(today) || 0;
     this.costTracker.set(today, currentCost + cost);
 
@@ -218,7 +218,7 @@ Provide:
   }
 
   public getDailyCost(date?: string): number {
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || new Date().toISOString().split('T')[0]!; // This is guaranteed to exist
     return this.costTracker.get(targetDate) || 0;
   }
 
@@ -230,7 +230,7 @@ Provide:
       });
       return response.content.includes('OK');
     } catch (error) {
-      logger.error('Anthropic health check failed', { error: error.message });
+      logger.error('Anthropic health check failed', { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }
