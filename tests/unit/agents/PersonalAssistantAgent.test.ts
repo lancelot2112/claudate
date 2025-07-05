@@ -161,10 +161,10 @@ describe('PersonalAssistantAgent', () => {
         metadata: {}
       };
 
-      // This will fail until processMessage is implemented
-      expect((agent as any).processMessage).toBeDefined(); // Will fail with clear message about missing implementation
+      // Test the real public processMessage method
+      expect(agent.processMessage).toBeDefined();
       
-      const response = await (agent as any).processMessage(message, context);
+      const response = await agent.processMessage(message, context);
 
       expect(response.success).toBe(true);
       expect(response.data.text).toContain('•');
@@ -195,12 +195,12 @@ describe('PersonalAssistantAgent', () => {
         metadata: {}
       };
 
-      const response = await (agent as any).processMessage(message, context);
+      const response = await agent.processMessage(message, context);
 
       expect(response.success).toBe(true);
       expect(response.data.routingRequired).toBe(true);
-      expect(response.metadata.routing.targetAgent).toBe('claude-execution');
-      expect(response.metadata.routing.requiredCapabilities).toContain('coding');
+      expect(response.metadata?.routing?.targetAgent).toBe('claude-execution');
+      expect(response.metadata?.routing?.requiredCapabilities).toContain('coding');
     });
 
     it('should detect and route strategic requests', async () => {
@@ -227,12 +227,12 @@ describe('PersonalAssistantAgent', () => {
         metadata: {}
       };
 
-      const response = await (agent as any).processMessage(message, context);
+      const response = await agent.processMessage(message, context);
 
       expect(response.success).toBe(true);
       expect(response.data.routingRequired).toBe(true);
-      expect(response.metadata.routing.targetAgent).toBe('gemini-strategic');
-      expect(response.metadata.routing.requiredCapabilities).toContain('planning');
+      expect(response.metadata?.routing?.targetAgent).toBe('gemini-strategic');
+      expect(response.metadata?.routing?.requiredCapabilities).toContain('planning');
     });
 
     it('should handle urgent messages appropriately', async () => {
@@ -259,13 +259,13 @@ describe('PersonalAssistantAgent', () => {
         metadata: {}
       };
 
-      const response = await (agent as any).processMessage(message, context);
+      const response = await agent.processMessage(message, context);
 
       expect(response.success).toBe(true);
       expect(response.data.text).toContain('🚨 URGENT');
       expect(response.data.actions).toContain('escalate_urgency');
-      expect(response.metadata.executiveBrief).toBeDefined();
-      expect(response.metadata.executiveBrief.urgency).toBe('critical');
+      expect(response.metadata?.executiveBrief).toBeDefined();
+      expect(response.metadata?.executiveBrief?.urgency).toBe('critical');
     });
 
     it('should format responses as executive briefs', async () => {
@@ -292,7 +292,7 @@ describe('PersonalAssistantAgent', () => {
         metadata: {}
       };
 
-      const response = await (agent as any).processMessage(message, context);
+      const response = await agent.processMessage(message, context);
 
       expect(response.success).toBe(true);
       
@@ -335,10 +335,10 @@ describe('PersonalAssistantAgent', () => {
         createdAt: new Date(),
       };
 
-      // This will fail until assignTask is implemented
-      expect((agent as any).assignTask).toBeDefined(); // Will fail with clear message about missing implementation
+      // Test the real public assignTask method
+      expect(agent.assignTask).toBeDefined();
       
-      await (agent as any).assignTask(task);
+      await agent.assignTask(task);
 
       // Wait for task completion
       await new Promise(resolve => setTimeout(resolve, 150));
@@ -363,10 +363,10 @@ describe('PersonalAssistantAgent', () => {
         createdAt: new Date(),
       };
 
-      // This will fail until assignTask is implemented
-      expect((agent as any).assignTask).toBeDefined(); // Will fail with clear message about missing implementation
+      // Test the real public assignTask method
+      expect(agent.assignTask).toBeDefined();
       
-      await (agent as any).assignTask(task);
+      await agent.assignTask(task);
 
       // Wait for task completion
       await new Promise(resolve => setTimeout(resolve, 150));
