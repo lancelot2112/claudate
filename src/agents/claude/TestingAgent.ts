@@ -131,30 +131,7 @@ export class TestingAgent extends BaseAgent {
   }
 
   private async generateUnitTests(task: TestingTask, context: AgentContext): Promise<TestingResult> {
-    const prompt = `Generate comprehensive unit tests for the following code:
-
-${task.targetCode}
-
-${task.framework ? `Testing framework: ${task.framework}` : ''}
-${task.testEnvironment ? `Test environment: ${task.testEnvironment}` : ''}
-
-${task.coverage ? `Coverage requirement: ${task.coverage.required}%` : ''}
-
-${task.constraints ? `Constraints:
-${task.constraints.map(c => `- ${c}`).join('\n')}` : ''}
-
-${task.existingTests ? `Existing tests to extend:
-${task.existingTests}` : ''}
-
-Please provide:
-1. Complete unit test suite
-2. Test cases for happy paths
-3. Edge case testing
-4. Error handling tests
-5. Mock setup where needed
-6. Coverage analysis
-7. Test execution instructions`;
-
+    // TODO: Use proper prompt for AI testing request
     const response = await this.anthropicClient.sendTestingRequest(task.targetCode, 'unit');
     const parsedResult = this.parseTestResponse(response, 'unit');
 
@@ -172,29 +149,7 @@ Please provide:
   }
 
   private async generateIntegrationTests(task: TestingTask, context: AgentContext): Promise<TestingResult> {
-    const prompt = `Generate integration tests for the following code:
-
-${task.targetCode}
-
-${task.framework ? `Testing framework: ${task.framework}` : ''}
-${task.testEnvironment ? `Test environment: ${task.testEnvironment}` : ''}
-
-Focus on:
-1. Component interactions
-2. API integrations
-3. Database interactions
-4. External service dependencies
-5. Data flow validation
-6. Configuration testing
-
-Please provide:
-1. Complete integration test suite
-2. Setup and teardown procedures
-3. Mock/stub strategies for external dependencies
-4. Test data management
-5. Environment configuration
-6. Test execution workflow`;
-
+    // TODO: Use proper prompt for AI testing request
     const response = await this.anthropicClient.sendTestingRequest(task.targetCode, 'integration');
     const parsedResult = this.parseTestResponse(response, 'integration');
 
@@ -212,29 +167,7 @@ Please provide:
   }
 
   private async generateE2ETests(task: TestingTask, context: AgentContext): Promise<TestingResult> {
-    const prompt = `Generate end-to-end tests for the following application/feature:
-
-${task.targetCode}
-
-${task.framework ? `E2E framework: ${task.framework}` : ''}
-${task.testEnvironment ? `Test environment: ${task.testEnvironment}` : ''}
-
-Focus on:
-1. Complete user workflows
-2. Cross-browser compatibility
-3. User interface interactions
-4. Data persistence validation
-5. Performance characteristics
-6. Error scenarios
-
-Please provide:
-1. Complete E2E test suite
-2. Page object models (if applicable)
-3. Test data setup/cleanup
-4. Browser configuration
-5. Parallel execution strategy
-6. Reporting and screenshots`;
-
+    // TODO: Use proper prompt for AI testing request
     const response = await this.anthropicClient.sendTestingRequest(task.targetCode, 'e2e');
     const parsedResult = this.parseTestResponse(response, 'e2e');
 
@@ -395,7 +328,7 @@ Please provide:
 
     // Extract coverage information
     const coverageMatch = content.match(/(?:coverage|estimated coverage):\s*(\d+)%/i);
-    const coveragePercent = coverageMatch ? parseInt(coverageMatch[1]) : undefined;
+    const coveragePercent = coverageMatch?.[1] ? parseInt(coverageMatch[1]) : undefined;
     
     const areasMatch = content.match(/(?:coverage areas|test areas):\s*([\s\S]*?)(?:\n\n|\n#|$)/i);
     const areas = areasMatch?.[1]
@@ -458,7 +391,7 @@ Please provide:
 
     const content = response.content;
     const coverageMatch = content.match(/coverage:\s*(\d+)%/i);
-    const coverage = coverageMatch ? parseInt(coverageMatch[1]) : 0;
+    const coverage = coverageMatch?.[1] ? parseInt(coverageMatch[1]) : 0;
 
     const uncoveredMatch = content.match(/(?:uncovered|missing):\s*([\s\S]*?)(?:\n\n|\n#|$)/i);
     const uncoveredAreas = uncoveredMatch?.[1]

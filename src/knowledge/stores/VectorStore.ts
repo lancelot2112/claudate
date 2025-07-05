@@ -50,7 +50,7 @@ export class VectorStore implements IVectorStore {
         name: this.config.collectionName,
         embeddingFunction: this.embeddingFunction,
         metadata: {
-          'hnsw:space': this.config.distanceMetric,
+          'hnsw:space': this.config.distanceMetric || 'cosine',
           description: 'Claudate knowledge base collection'
         }
       });
@@ -72,8 +72,8 @@ export class VectorStore implements IVectorStore {
       this.collection = null;
       logger.info('VectorStore shutdown completed');
     } catch (error) {
-      logger.error('Error during VectorStore shutdown', { error: error.message });
-      throw new VectorStoreError(`Shutdown failed: ${error.message}`);
+      logger.error('Error during VectorStore shutdown', { error: error instanceof Error ? error.message : String(error) });
+      throw new VectorStoreError(`Shutdown failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

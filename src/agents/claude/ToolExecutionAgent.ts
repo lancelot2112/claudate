@@ -3,7 +3,6 @@ import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
 import logger from '../../utils/logger.js';
 import { spawn, ChildProcess } from 'child_process';
-import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
 
 export interface ToolExecutionTask {
@@ -351,7 +350,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
     const processId = `${this.id}-${Date.now()}`;
 
     return new Promise((resolve, reject) => {
-      const process = spawn(toolConfig.command.split(' ')[0], [
+      const childProcess = spawn(toolConfig.command.split(' ')[0], [
         ...toolConfig.command.split(' ').slice(1),
         ...args
       ], {
@@ -360,26 +359,26 @@ Provide risk level (low/medium/high) and specific concerns.`;
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
-      this.runningProcesses.set(processId, process);
+      this.runningProcesses.set(processId, childProcess);
 
       let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data) => {
         stdout += data.toString();
       });
 
-      process.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data) => {
         stderr += data.toString();
       });
 
       // Set timeout
       const timeout = setTimeout(() => {
-        process.kill('SIGTERM');
+        childProcess.kill('SIGTERM');
         reject(new Error(`Tool execution timed out after ${toolConfig.timeoutMs}ms`));
       }, task.timeout || toolConfig.timeoutMs);
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         clearTimeout(timeout);
         this.runningProcesses.delete(processId);
         
@@ -441,25 +440,25 @@ Provide risk level (low/medium/high) and specific concerns.`;
         stdio: ['pipe', 'pipe', 'pipe']
       });
 
-      this.runningProcesses.set(processId, process);
+      this.runningProcesses.set(processId, childProcess);
 
       let stdout = '';
       let stderr = '';
 
-      process.stdout?.on('data', (data) => {
+      childProcess.stdout?.on('data', (data) => {
         stdout += data.toString();
       });
 
-      process.stderr?.on('data', (data) => {
+      childProcess.stderr?.on('data', (data) => {
         stderr += data.toString();
       });
 
       const timeout = setTimeout(() => {
-        process.kill('SIGTERM');
+        childProcess.kill('SIGTERM');
         reject(new Error(`Command execution timed out after ${options.timeout || 30000}ms`));
       }, options.timeout || 30000);
 
-      process.on('close', (code) => {
+      childProcess.on('close', (code) => {
         clearTimeout(timeout);
         this.runningProcesses.delete(processId);
         
@@ -487,7 +486,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
   public async stopAllProcesses(): Promise<void> {
     for (const [processId, process] of this.runningProcesses) {
       try {
-        process.kill('SIGTERM');
+        childProcess.kill('SIGTERM');
         logger.info('Stopped running process', { processId, agentId: this.id });
       } catch (error) {
         logger.error('Failed to stop process', { processId, error: error.message });

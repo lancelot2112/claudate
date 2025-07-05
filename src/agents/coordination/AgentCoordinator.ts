@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { BaseAgent } from '../base/Agent.js';
 import { AgentContext, AgentResult, AgentCapability } from '../../types/Agent.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 export interface AgentRegistration {
   agent: BaseAgent;
@@ -206,8 +206,9 @@ export class AgentCoordinator extends EventEmitter {
     // Sort by score and return best match
     scoredAgents.sort((a, b) => b.score - a.score);
     
-    if (scoredAgents.length > 0 && scoredAgents[0].score > 0) {
-      return scoredAgents[0].agentId;
+    const bestAgent = scoredAgents[0];
+    if (scoredAgents.length > 0 && bestAgent && bestAgent.score > 0) {
+      return bestAgent.agentId;
     }
 
     return null;
@@ -260,7 +261,7 @@ export class AgentCoordinator extends EventEmitter {
       logger.error('Failed to start task execution', { 
         taskId: task.taskId, 
         agentId: selectedAgentId, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       });
       
       task.status = 'failed';
