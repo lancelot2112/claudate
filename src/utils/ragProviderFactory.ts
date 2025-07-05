@@ -8,11 +8,12 @@
 import { AnthropicClient } from '../integrations/ai/AnthropicClient';
 import { GeminiClient } from '../integrations/ai/GeminiClient';
 import { ClaudeCLIClient } from '../integrations/ai/ClaudeCLIClient';
+import { GeminiCLIClient } from '../integrations/ai/GeminiCLIClient';
 import logger from './logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini' | 'claude-cli';
-  client: AnthropicClient | GeminiClient | ClaudeCLIClient;
+  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli';
+  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient;
   priority: number;
   maxContextLength: number;
 }
@@ -51,16 +52,17 @@ export class RAGProviderFactory {
       enableFallbacks
     });
 
-    // 1. Claude CLI (preferred if available and preferCLI is true)
+    // 1. CLI Providers (preferred if available and preferCLI is true)
     if (preferCLI) {
+      // Try Claude CLI first
       try {
-        const cliClient = new ClaudeCLIClient({ timeout });
-        const isAvailable = await cliClient.healthCheck();
+        const claudeCLI = new ClaudeCLIClient({ timeout });
+        const isAvailable = await claudeCLI.healthCheck();
         
         if (isAvailable) {
           providers.push({
             name: 'claude-cli',
-            client: cliClient,
+            client: claudeCLI,
             priority: priority++,
             maxContextLength: maxContextLength * 2 // CLI can handle larger contexts
           });
@@ -70,6 +72,33 @@ export class RAGProviderFactory {
         }
       } catch (error) {
         logger.warn('Failed to initialize Claude CLI', { 
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+
+      // Try Gemini CLI next
+      try {
+        const geminiCLI = await GeminiCLIClient.createWithAutoDetection({ timeout });
+        
+        if (geminiCLI) {
+          const isAvailable = await geminiCLI.healthCheck();
+          
+          if (isAvailable) {
+            providers.push({
+              name: 'gemini-cli',
+              client: geminiCLI,
+              priority: priority++,
+              maxContextLength: maxContextLength * 1.5 // Gemini CLI good context handling
+            });
+            logger.info('Gemini CLI provider added', { priority: priority - 1 });
+          } else {
+            logger.warn('Gemini CLI detected but not working, skipping');
+          }
+        } else {
+          logger.warn('No Gemini CLI tools detected, skipping');
+        }
+      } catch (error) {
+        logger.warn('Failed to initialize Gemini CLI', { 
           error: error instanceof Error ? error.message : String(error)
         });
       }
@@ -122,24 +151,52 @@ export class RAGProviderFactory {
     }
 
     // Add CLI as fallback if we prefer API but CLI is available
-    if (!preferCLI && enableFallbacks && !providers.some(p => p.name === 'claude-cli')) {
-      try {
-        const cliClient = new ClaudeCLIClient({ timeout });
-        const isAvailable = await cliClient.healthCheck();
-        
-        if (isAvailable) {
-          providers.push({
-            name: 'claude-cli',
-            client: cliClient,
-            priority: priority++,
-            maxContextLength: maxContextLength * 2
+    if (!preferCLI && enableFallbacks) {
+      // Add Claude CLI as fallback if not already present
+      if (!providers.some(p => p.name === 'claude-cli')) {
+        try {
+          const claudeCLI = new ClaudeCLIClient({ timeout });
+          const isAvailable = await claudeCLI.healthCheck();
+          
+          if (isAvailable) {
+            providers.push({
+              name: 'claude-cli',
+              client: claudeCLI,
+              priority: priority++,
+              maxContextLength: maxContextLength * 2
+            });
+            logger.info('Claude CLI added as fallback', { priority: priority - 1 });
+          }
+        } catch (error) {
+          logger.debug('Claude CLI fallback not available', {
+            error: error instanceof Error ? error.message : String(error)
           });
-          logger.info('Claude CLI added as fallback', { priority: priority - 1 });
         }
-      } catch (error) {
-        logger.debug('Claude CLI fallback not available', {
-          error: error instanceof Error ? error.message : String(error)
-        });
+      }
+
+      // Add Gemini CLI as fallback if not already present
+      if (!providers.some(p => p.name === 'gemini-cli')) {
+        try {
+          const geminiCLI = await GeminiCLIClient.createWithAutoDetection({ timeout });
+          
+          if (geminiCLI) {
+            const isAvailable = await geminiCLI.healthCheck();
+            
+            if (isAvailable) {
+              providers.push({
+                name: 'gemini-cli',
+                client: geminiCLI,
+                priority: priority++,
+                maxContextLength: maxContextLength * 1.5
+              });
+              logger.info('Gemini CLI added as fallback', { priority: priority - 1 });
+            }
+          }
+        } catch (error) {
+          logger.debug('Gemini CLI fallback not available', {
+            error: error instanceof Error ? error.message : String(error)
+          });
+        }
       }
     }
 
@@ -156,7 +213,71 @@ export class RAGProviderFactory {
   }
 
   /**
-   * Create a simple CLI-only provider setup
+   * Create CLI-only provider setup with both Claude and Gemini CLIs
+   */
+  public static async createCLIOnlyProviders(options: { 
+    timeout?: number;
+    preferClaude?: boolean;
+  } = {}): Promise<RAGProvider[]> {
+    const { timeout = 30000, preferClaude = true } = options;
+    const providers: RAGProvider[] = [];
+    let priority = 1;
+    
+    // Try Claude CLI
+    try {
+      const claudeCLI = new ClaudeCLIClient({ timeout });
+      const isAvailable = await claudeCLI.healthCheck();
+      
+      if (isAvailable) {
+        providers.push({
+          name: 'claude-cli',
+          client: claudeCLI,
+          priority: preferClaude ? priority++ : priority + 1,
+          maxContextLength: 200000 // CLI can handle very large contexts
+        });
+        logger.info('Claude CLI added to CLI-only setup');
+      }
+    } catch (error) {
+      logger.warn('Claude CLI not available for CLI-only setup', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+
+    // Try Gemini CLI
+    try {
+      const geminiCLI = await GeminiCLIClient.createWithAutoDetection({ timeout });
+      
+      if (geminiCLI) {
+        const isAvailable = await geminiCLI.healthCheck();
+        
+        if (isAvailable) {
+          providers.push({
+            name: 'gemini-cli',
+            client: geminiCLI,
+            priority: preferClaude ? priority++ : priority,
+            maxContextLength: 150000 // Good context handling
+          });
+          logger.info('Gemini CLI added to CLI-only setup');
+        }
+      }
+    } catch (error) {
+      logger.warn('Gemini CLI not available for CLI-only setup', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+
+    if (providers.length === 0) {
+      throw new Error('No CLI providers available. Please ensure Claude CLI or Gemini CLI tools are installed and accessible.');
+    }
+
+    // Sort by priority
+    providers.sort((a, b) => a.priority - b.priority);
+    
+    return providers;
+  }
+
+  /**
+   * Create a simple Claude CLI-only provider setup (legacy method)
    */
   public static async createCLIOnlyProvider(options: { timeout?: number } = {}): Promise<RAGProvider[]> {
     const { timeout = 30000 } = options;

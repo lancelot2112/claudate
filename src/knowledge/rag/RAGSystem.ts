@@ -10,11 +10,12 @@ import { SemanticSearchEngine } from '../search/SemanticSearch';
 import { AnthropicClient } from '../../integrations/ai/AnthropicClient';
 import { GeminiClient } from '../../integrations/ai/GeminiClient';
 import { ClaudeCLIClient } from '../../integrations/ai/ClaudeCLIClient';
+import { GeminiCLIClient } from '../../integrations/ai/GeminiCLIClient';
 import logger from '../../utils/logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini' | 'claude-cli';
-  client: AnthropicClient | GeminiClient | ClaudeCLIClient;
+  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli';
+  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient;
   priority: number;
   maxContextLength: number;
 }
@@ -330,6 +331,18 @@ Content: ${content}`;
             system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
             temperature: 0.3,
             max_tokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
+        } else if (provider.name === 'gemini-cli' && provider.client instanceof GeminiCLIClient) {
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', parts: [{ text: contextText }] }],
+            systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            maxOutputTokens: 2000
           });
           
           return {
