@@ -434,7 +434,7 @@ Provide risk level (low/medium/high) and specific concerns.`;
     const processId = `${this.id}-${Date.now()}`;
 
     return new Promise((resolve, reject) => {
-      const process = spawn(command, args, {
+      const childProcess = spawn(command, args, {
         cwd: options.workingDirectory || process.cwd(),
         env: { ...process.env, ...options.environment },
         stdio: ['pipe', 'pipe', 'pipe']
