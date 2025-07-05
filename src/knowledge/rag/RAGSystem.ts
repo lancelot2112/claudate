@@ -9,11 +9,12 @@ import {
 import { SemanticSearchEngine } from '../search/SemanticSearch';
 import { AnthropicClient } from '../../integrations/ai/AnthropicClient';
 import { GeminiClient } from '../../integrations/ai/GeminiClient';
+import { ClaudeCLIClient } from '../../integrations/ai/ClaudeCLIClient';
 import logger from '../../utils/logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini';
-  client: AnthropicClient | GeminiClient;
+  name: 'claude' | 'gemini' | 'claude-cli';
+  client: AnthropicClient | GeminiClient | ClaudeCLIClient;
   priority: number;
   maxContextLength: number;
 }
@@ -312,6 +313,18 @@ Content: ${content}`;
         logger.debug('Attempting AI generation', { provider: provider.name });
         
         if (provider.name === 'claude' && provider.client instanceof AnthropicClient) {
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', content: contextText }],
+            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            max_tokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
+        } else if (provider.name === 'claude-cli' && provider.client instanceof ClaudeCLIClient) {
           const response = await provider.client.sendMessage({
             messages: [{ role: 'user', content: contextText }],
             system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
