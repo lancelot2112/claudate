@@ -44,23 +44,12 @@ describe('PersonalAssistantAgent', () => {
 
   beforeEach(() => {
     config = {
-      id: 'pa-agent-001',
       type: 'personal-assistant',
       name: 'Personal Assistant',
       description: 'Executive personal assistant agent',
       capabilities: [
-        {
-          name: 'message-routing',
-          description: 'Route messages to appropriate agents',
-          inputTypes: ['text', 'image'],
-          outputTypes: ['text'],
-        },
-        {
-          name: 'executive-briefing',
-          description: 'Generate executive summaries',
-          inputTypes: ['text'],
-          outputTypes: ['text'],
-        },
+        'message-routing',
+        'executive-briefing'
       ],
       maxConcurrentTasks: 10,
       timeout: 30000,
