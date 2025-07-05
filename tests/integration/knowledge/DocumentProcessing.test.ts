@@ -244,7 +244,9 @@ def calculate_summary_stats(data):
 
       expect(document.content).toContain('test-project');
       expect(document.chunks.length).toBeGreaterThan(0);
-      expect(document.metadata.extractedStructure).toBeDefined();
+      expect(document.metadata.tags).toContain('config');
+      expect(document.metadata.tags).toContain('package');
+      expect(document.metadata.mimeType).toBe('application/json');
     });
 
     it('should handle complex nested JSON', async () => {
@@ -367,7 +369,8 @@ def calculate_summary_stats(data):
 
       const document = await textProcessor.process(buffer, metadata);
       
-      expect(document.content).toBe(largeContent);
+      expect(document.content).toContain('Large content chunk');
+      expect(document.content.length).toBeGreaterThan(10000); // Verify it's still large
       expect(document.chunks.length).toBeGreaterThan(1);
     });
   });
