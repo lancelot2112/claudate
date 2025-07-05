@@ -1,7 +1,7 @@
 import { BaseAgent } from '../base/Agent.js';
 import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 import { spawn, ChildProcess } from 'child_process';
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
@@ -229,12 +229,12 @@ export class ToolExecutionAgent extends BaseAgent {
       this.updateStatus('failed');
       logger.error('ToolExecutionAgent task failed', { 
         agentId: this.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       });
       
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         agentId: this.id,
         timestamp: Date.now()
       };

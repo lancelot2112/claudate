@@ -11,7 +11,9 @@ export interface DatabaseConfig {
   port: number;
   name: string;
   user: string;
+  username: string;
   password: string;
+  ssl?: boolean;
 }
 
 export interface RedisConfig {
@@ -65,6 +67,18 @@ export interface AppConfig {
   };
   ai: AIConfig;
   communication: CommunicationConfig;
+  knowledge: {
+    vectorStore: {
+      provider: string;
+      collectionName: string;
+      embeddingProvider: string;
+      url: string;
+    };
+    ingestion: {
+      maxFileSize: number;
+      supportedFormats: string[];
+    };
+  };
   security: {
     jwtSecret: string;
     jwtExpiresIn: string;
@@ -126,7 +140,9 @@ export const config: AppConfig = {
     port: getEnvNumber('DATABASE_PORT', 5432),
     name: getEnvVar('DATABASE_NAME', 'claudate'),
     user: getEnvVar('DATABASE_USER', 'claudate'),
+    username: getEnvVar('DATABASE_USER', 'claudate'),
     password: getEnvVar('DATABASE_PASSWORD'),
+    ssl: process.env.DATABASE_SSL === 'true',
   },
 
   redis: {
@@ -168,6 +184,19 @@ export const config: AppConfig = {
     googleChat: {
       credentialsPath: getEnvVar('GOOGLE_CHAT_CREDENTIALS_PATH'),
       webhookUrl: getEnvVar('GOOGLE_CHAT_WEBHOOK_URL'),
+    },
+  },
+
+  knowledge: {
+    vectorStore: {
+      provider: getEnvVar('VECTOR_STORE_PROVIDER', 'chromadb'),
+      collectionName: getEnvVar('VECTOR_COLLECTION_NAME', 'claudate-knowledge'),
+      embeddingProvider: getEnvVar('EMBEDDING_PROVIDER', 'openai'),
+      url: getEnvVar('CHROMA_URL', 'http://localhost:8000'),
+    },
+    ingestion: {
+      maxFileSize: getEnvNumber('KNOWLEDGE_MAX_FILE_SIZE', 10485760), // 10MB
+      supportedFormats: getEnvVar('KNOWLEDGE_SUPPORTED_FORMATS', 'pdf,txt,md,json,js,ts,py').split(','),
     },
   },
 

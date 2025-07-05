@@ -1,4 +1,4 @@
-import { BaseMessage, UrgencyLevel } from './common';
+import { BaseMessage, UrgencyLevel, CommunicationChannel as CommunicationChannelType } from './common';
 
 export interface CommunicationChannel {
   id: string;
@@ -31,7 +31,7 @@ export interface RateLimit {
 }
 
 export interface ChannelMessage extends BaseMessage {
-  channel: string;
+  channel: CommunicationChannelType;
   recipient?: string;
   attachments?: MediaAttachment[];
   channelSpecificData?: Record<string, any>;

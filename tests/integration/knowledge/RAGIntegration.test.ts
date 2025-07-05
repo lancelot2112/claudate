@@ -66,7 +66,7 @@ describe('RAG System Integration', () => {
          - Q-Learning: Learns optimal actions through trial and error
          - Policy Gradient Methods: Directly optimize decision-making policies
          - Actor-Critic Methods: Combines value estimation and policy optimization`,
-      type: 'documentation' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'knowledge-base',
       metadata: {
         author: 'ML Engineer',
@@ -97,7 +97,7 @@ describe('RAG System Integration', () => {
       4. Optimization: Use algorithms like Adam or SGD
 
       Deep learning refers to neural networks with many hidden layers, enabling the learning of complex patterns and representations.`,
-      type: 'guide' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'knowledge-base',
       metadata: {
         author: 'Deep Learning Specialist',
@@ -134,7 +134,7 @@ describe('RAG System Integration', () => {
       - Pandas: Data manipulation and analysis
       - Scikit-learn: Machine learning library
       - TensorFlow/PyTorch: Deep learning frameworks`,
-      type: 'guide' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'knowledge-base',
       metadata: {
         author: 'Data Scientist',

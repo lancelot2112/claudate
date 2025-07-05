@@ -1,4 +1,5 @@
-import { createCanvas, Chart, ChartConfiguration, ChartOptions } from 'chart.js/auto';
+import { Chart, ChartConfiguration, ChartOptions } from 'chart.js/auto';
+import { createCanvas } from 'canvas';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { MediaAttachment } from '@/types/Communication';
@@ -160,7 +161,6 @@ export class ChartGenerator {
         backgroundColor: this.EXECUTIVE_COLORS.primary,
         borderColor: this.EXECUTIVE_COLORS.primary,
         borderWidth: 2,
-        fill: false,
       }],
     };
 

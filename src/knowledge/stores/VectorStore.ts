@@ -1,4 +1,4 @@
-import { ChromaClient, Collection, OpenAIEmbeddingFunction } from 'chromadb';
+import { ChromaClient, Collection } from 'chromadb';
 import { 
   IVectorStore, 
   Document, 
@@ -34,9 +34,8 @@ export class VectorStore implements IVectorStore {
     });
 
     // Initialize embedding function (using OpenAI by default)
-    this.embeddingFunction = new OpenAIEmbeddingFunction({
-      openai_api_key: config.ai?.openai?.apiKey || process.env.OPENAI_API_KEY
-    });
+    // Note: Using undefined for now, will be set up properly with environment
+    this.embeddingFunction = undefined;
 
     logger.info('VectorStore initialized', { 
       provider: this.config.provider,

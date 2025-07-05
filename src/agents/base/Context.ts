@@ -16,6 +16,7 @@ export class ContextManager {
     const context: AgentContext = {
       sessionId,
       userId,
+      task: null, // Will be set when a task is assigned
       conversationHistory: [],
       userPreferences,
       activeProjects: [],

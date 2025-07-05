@@ -2,7 +2,7 @@
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'http' | 'debug';
 
-export type AgentType = 'personal_assistant' | 'strategic' | 'execution';
+export type AgentType = 'personal-assistant' | 'personal_assistant' | 'strategic' | 'execution';
 
 export type CommunicationChannel = 'sms' | 'mms' | 'google-chat' | 'email' | 'voice' | 'video';
 
@@ -18,6 +18,8 @@ export interface BaseMessage {
   type: MessageType;
   urgency: UrgencyLevel;
   content: string;
+  channel?: CommunicationChannel;
+  direction?: MessageDirection;
   source?: string;
   recipient?: string;
   sender?: string;

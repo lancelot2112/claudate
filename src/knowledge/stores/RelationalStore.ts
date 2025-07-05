@@ -538,7 +538,19 @@ export class RelationalStore implements IRelationalStore {
         GROUP BY type
       `);
       
-      const documentsByType: Record<DocumentType, number> = {};
+      const documentsByType: Record<DocumentType, number> = {
+        'text': 0,
+        'markdown': 0,
+        'pdf': 0,
+        'docx': 0,
+        'code': 0,
+        'email': 0,
+        'chat': 0,
+        'url': 0,
+        'image': 0,
+        'audio': 0,
+        'video': 0
+      };
       typeResult.rows.forEach(row => {
         documentsByType[row.type as DocumentType] = parseInt(row.count);
       });

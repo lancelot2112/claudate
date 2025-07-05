@@ -33,7 +33,7 @@ describe('Knowledge Management Integration', () => {
       id: 'doc-1',
       title: 'AI and Machine Learning Overview',
       content: 'Artificial Intelligence and Machine Learning are transforming how we process information. Neural networks enable pattern recognition, while deep learning architectures like transformers have revolutionized natural language processing.',
-      type: 'article' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'test-source-1',
       metadata: {
         author: 'AI Researcher',
@@ -49,7 +49,7 @@ describe('Knowledge Management Integration', () => {
       id: 'doc-2',
       title: 'Database Design Principles',
       content: 'Good database design follows normalization principles to reduce redundancy. ACID properties ensure data consistency, while indexes improve query performance. Vector databases are emerging for semantic search.',
-      type: 'documentation' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'test-source-2',
       metadata: {
         author: 'Database Expert',
@@ -65,7 +65,7 @@ describe('Knowledge Management Integration', () => {
       id: 'doc-3',
       title: 'Software Architecture Patterns',
       content: 'Microservices architecture promotes modularity and scalability. Event-driven systems enable loose coupling. The Model-View-Controller pattern separates concerns in application design.',
-      type: 'guide' as DocumentType,
+      type: 'text' as DocumentType,
       source: 'test-source-3',
       metadata: {
         author: 'Software Architect',
@@ -206,8 +206,8 @@ describe('Knowledge Management Integration', () => {
       // Wait for processing
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const status = ingestionPipeline.getJobStatus(jobId);
-      expect(['processing', 'completed']).toContain(status?.status);
+      const job = ingestionPipeline.getJob(jobId);
+      expect(['processing', 'completed']).toContain(job?.status);
     });
 
     it('should handle batch ingestion', async () => {
@@ -235,8 +235,8 @@ describe('Knowledge Management Integration', () => {
       await new Promise(resolve => setTimeout(resolve, 3000));
       
       for (const jobId of jobIds) {
-        const status = ingestionPipeline.getJobStatus(jobId);
-        expect(['processing', 'completed']).toContain(status?.status);
+        const job = ingestionPipeline.getJob(jobId);
+        expect(['processing', 'completed']).toContain(job?.status);
       }
     });
   });
@@ -259,7 +259,7 @@ describe('Knowledge Management Integration', () => {
       
       expect(response.results).toBeDefined();
       expect(response.results.length).toBeGreaterThan(0);
-      expect(response.results[0].score).toBeGreaterThan(0);
+      expect(response.results[0]?.score).toBeGreaterThan(0);
     });
 
     it('should find similar documents', async () => {
@@ -269,7 +269,7 @@ describe('Knowledge Management Integration', () => {
       expect(similarDocs.length).toBeLessThanOrEqual(3);
       
       if (similarDocs.length > 0) {
-        expect(similarDocs[0].document.id).not.toBe('doc-1');
+        expect(similarDocs[0]?.document.id).not.toBe('doc-1');
       }
     });
   });
@@ -291,13 +291,13 @@ describe('Knowledge Management Integration', () => {
       
       expect(results).toBeDefined();
       expect(results.length).toBeGreaterThan(0);
-      expect(results[0].document.content).toContain('database');
+      expect(results[0]?.document.content).toContain('database');
     });
 
     it('should filter by document type', async () => {
-      const articles = await relationalStore.getDocumentsByType('article');
-      expect(articles.length).toBeGreaterThan(0);
-      expect(articles.every(doc => doc.type === 'article')).toBe(true);
+      const textDocs = await relationalStore.getDocumentsByType('text');
+      expect(textDocs.length).toBeGreaterThan(0);
+      expect(textDocs.every(doc => doc.type === 'text')).toBe(true);
     });
 
     it('should filter by tags', async () => {
@@ -336,8 +336,8 @@ describe('Knowledge Management Integration', () => {
       expect(path).toBeDefined();
       if (path) {
         expect(path.nodes.length).toBeGreaterThanOrEqual(2);
-        expect(path.nodes[0].id).toBe('doc-1');
-        expect(path.nodes[path.nodes.length - 1].id).toBe('doc-3');
+        expect(path.nodes[0]?.id).toBe('doc-1');
+        expect(path.nodes[path.nodes.length - 1]?.id).toBe('doc-3');
       }
     });
 
@@ -346,7 +346,7 @@ describe('Knowledge Management Integration', () => {
       
       expect(results).toBeDefined();
       expect(results.length).toBeGreaterThan(0);
-      expect(results[0].nodes.length).toBeGreaterThan(0);
+      expect(results[0]?.nodes.length).toBeGreaterThan(0);
     });
   });
 
@@ -519,7 +519,7 @@ describe('Knowledge Management Integration', () => {
         id: 'workflow-test',
         title: 'Knowledge Management Systems',
         content: 'Knowledge management systems help organizations capture, store, and retrieve information effectively. They combine search, categorization, and intelligent retrieval.',
-        type: 'article',
+        type: 'text',
         source: 'workflow-test',
         metadata: {
           author: 'KM Expert',

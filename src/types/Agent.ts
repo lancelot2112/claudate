@@ -13,6 +13,9 @@ export interface AgentConfig {
   name: string;
   type: AgentType;
   capabilities: string[];
+  enabled: boolean;
+  priority: number;
+  maxConcurrentTasks: number;
 }
 
 export interface AgentStatus {
@@ -73,7 +76,13 @@ export interface AgentContext {
   sessionId: string;
   userId: string;
   task: any;
+  currentTask?: any;
   previousMessages?: BaseMessage[];
+  conversationHistory: BaseMessage[];
+  contextWindow: number;
+  recentDecisions: AgentDecision[];
+  activeProjects: any[];
+  userPreferences: Record<string, any>;
   metadata?: Record<string, any>;
   timestamp: Date;
 }

@@ -1,7 +1,7 @@
 import { BaseAgent } from '../base/Agent.js';
 import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
 import { AnthropicClient, AnthropicResponse } from '../../integrations/ai/AnthropicClient.js';
-import { logger } from '../../utils/logger.js';
+import logger from '../../utils/logger.js';
 
 export interface CodingTask {
   type: 'implement' | 'debug' | 'refactor' | 'review' | 'optimize';
@@ -89,7 +89,7 @@ export class CodingAgent extends BaseAgent {
       this.updateMetrics({
         taskType: task.type,
         language: task.language,
-        duration: Date.now() - context.timestamp
+        duration: Date.now() - context.timestamp.getTime()
       });
 
       return result;
@@ -97,12 +97,12 @@ export class CodingAgent extends BaseAgent {
       this.updateStatus('failed');
       logger.error('CodingAgent task failed', { 
         agentId: this.id, 
-        error: error.message 
+        error: error instanceof Error ? error.message : String(error) 
       });
       
       return {
         success: false,
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         agentId: this.id,
         timestamp: Date.now()
       };
