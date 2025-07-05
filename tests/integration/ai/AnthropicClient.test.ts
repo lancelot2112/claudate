@@ -1,4 +1,4 @@
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient.js';
+import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
 // Mock the Anthropic SDK

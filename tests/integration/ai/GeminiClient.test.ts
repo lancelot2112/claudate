@@ -1,4 +1,4 @@
-import { GeminiClient } from '../../../src/integrations/ai/GeminiClient.js';
+import { GeminiClient } from '../../../src/integrations/ai/GeminiClient';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
 // Mock the Google AI SDK

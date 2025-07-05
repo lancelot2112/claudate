@@ -3,7 +3,7 @@ import {
   TextDocumentProcessor,
   CodeDocumentProcessor,
   JSONDocumentProcessor
-} from '../../../src/knowledge/ingestion/DocumentProcessor.js';
+} from '../../../src/knowledge/ingestion/DocumentProcessor';
 
 describe('Document Processing Integration', () => {
   let textProcessor: TextDocumentProcessor;
