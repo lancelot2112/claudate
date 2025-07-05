@@ -217,10 +217,10 @@ export class MobileFormatter {
 
   private static stripMarkdown(text: string): string {
     return text
+      .replace(/```[\s\S]*?```/g, '[CODE]') // Code blocks FIRST
       .replace(/\*\*(.*?)\*\*/g, '$1') // Bold
       .replace(/\*(.*?)\*/g, '$1') // Italic
-      .replace(/`(.*?)`/g, '"$1"') // Inline code
-      .replace(/```[\s\S]*?```/g, '[CODE]') // Code blocks
+      .replace(/`(.*?)`/g, '"$1"') // Inline code AFTER code blocks
       .replace(/#{1,6}\s+(.*)/g, '$1') // Headers
       .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Links
       .replace(/>\s+(.*)/g, '$1'); // Blockquotes
