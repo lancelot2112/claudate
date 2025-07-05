@@ -21,6 +21,8 @@ export class PersonalAssistantAgent extends BaseAgent {
   constructor(config: AgentConfig) {
     super(config);
     this.loadUserConfiguration();
+    // Load communication preferences synchronously during construction
+    this.loadCommunicationPreferencesSync();
   }
 
   protected async onInitialize(): Promise<void> {
@@ -371,6 +373,28 @@ export class PersonalAssistantAgent extends BaseAgent {
     task.output = analysis;
   }
 
+  // Public API methods expected by tests
+  public async processMessage(message: BaseMessage, context: AgentContext): Promise<AgentResponse> {
+    return this.onProcessMessage(message, context);
+  }
+
+  public async assignTask(task: Task): Promise<void> {
+    const taskContext: AgentContext = {
+      sessionId: `task_${task.id}`,
+      userId: 'system',
+      conversationHistory: [],
+      userPreferences: {},
+      activeProjects: [],
+      recentDecisions: [],
+      contextWindow: 50,
+      timestamp: new Date(),
+      task: task,
+      metadata: {}
+    };
+
+    await this.executeTask(taskContext);
+  }
+
   // Implementation of abstract method from BaseAgent
   public async getCapabilities(): Promise<string[]> {
     return [
@@ -403,21 +427,21 @@ export class PersonalAssistantAgent extends BaseAgent {
     }
   }
 
-  private async loadCommunicationPreferences(): Promise<void> {
+  private loadCommunicationPreferencesSync(): void {
     if (this.userConfig?.communication?.channels) {
       // Convert user config to communication preferences
       for (const [channel, config] of Object.entries(this.userConfig.communication.channels)) {
         if (config && typeof config === 'object' && 'enabled' in config && config.enabled) {
           this.communicationPreferences.push({
             channel,
-            urgency: ['critical', 'high', 'normal', 'low'] as UrgencyLevel[],
+            urgency: (config as any).useFor || ['normal', 'low'] as UrgencyLevel[],
             timeWindows: [{
-              start: this.userConfig.communication.preferences.communicationHours.start,
-              end: this.userConfig.communication.preferences.communicationHours.end,
-              timezone: this.userConfig.communication.preferences.communicationHours.timezone,
+              start: this.userConfig.communication.preferences?.communicationHours?.start || '09:00',
+              end: this.userConfig.communication.preferences?.communicationHours?.end || '17:00',
+              timezone: this.userConfig.communication.preferences?.communicationHours?.timezone || 'UTC',
             }],
             formatPreferences: {
-              maxBulletPoints: 3,
+              maxBulletPoints: this.userConfig.communication.preferences?.briefingStyle === 'bullet-points-max-3' ? 3 : 5,
               includeVisuals: true,
               includeActionItems: true,
             },
@@ -425,6 +449,29 @@ export class PersonalAssistantAgent extends BaseAgent {
         }
       }
     }
+
+    // Ensure we have at least default preferences if config is missing
+    if (this.communicationPreferences.length === 0) {
+      this.communicationPreferences.push({
+        channel: 'default',
+        urgency: ['normal', 'low'] as UrgencyLevel[],
+        timeWindows: [{
+          start: '09:00',
+          end: '17:00',
+          timezone: 'UTC',
+        }],
+        formatPreferences: {
+          maxBulletPoints: 3,
+          includeVisuals: true,
+          includeActionItems: true,
+        },
+      });
+    }
+  }
+
+  private async loadCommunicationPreferences(): Promise<void> {
+    // This async version is kept for completeness but the sync version is used in constructor
+    this.loadCommunicationPreferencesSync();
   }
 
   private async storeInteraction(
