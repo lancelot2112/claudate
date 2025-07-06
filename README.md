@@ -432,144 +432,118 @@ const detailedBriefing = await personalAssistant.sendGoogleChatBriefing({
 
 ## Project Structure
 
-### Recommended Folder Organization
+### Clean Repository Organization
 
 ```
 claudate/
-├── README.md
-├── LICENSE
-├── package.json
-├── tsconfig.json
-├── docker-compose.yml
-├── Dockerfile
-├── .gitignore
-├── .env.example
+├── 📋 Documentation & Guides
+│   ├── README.md                    # Project overview & getting started
+│   ├── IMPLEMENTATION.md            # 30-week implementation roadmap
+│   ├── CLAUDE.md                   # Development guidance for Claude Code
+│   ├── DEVELOPMENT_TODOS.md        # Current development priorities
+│   └── LICENSE                     # MIT license
 │
-├── config/
-│   ├── private.example.json
-│   ├── agents.json
-│   ├── database.json
-│   └── communication.json
+├── ⚙️ Configuration & Setup
+│   ├── package.json                # Dependencies and scripts
+│   ├── tsconfig.json              # TypeScript configuration
+│   ├── docker-compose.yml         # Multi-service Docker setup
+│   ├── Dockerfile                 # Production container
+│   ├── .gitignore                 # Git ignore patterns (inc. test-*.js)
+│   ├── .env.example               # Environment template
+│   ├── jest.config.js             # Unit test configuration
+│   ├── jest.integration.config.js # Integration test configuration
+│   └── nodemon.json               # Development server config
 │
-├── src/
-│   ├── agents/
-│   │   ├── base/
-│   │   │   ├── Agent.ts
-│   │   │   ├── Context.ts
-│   │   │   └── Memory.ts
-│   │   ├── personal-assistant/
-│   │   │   ├── PersonalAssistantAgent.ts
-│   │   │   ├── VisualBriefing.ts
-│   │   │   └── ChannelRouter.ts
-│   │   ├── gemini/
-│   │   │   ├── StrategicAgent.ts
-│   │   │   └── PlanningAgent.ts
-│   │   └── claude/
-│   │       ├── CodingAgent.ts
-│   │       ├── TestingAgent.ts
-│   │       └── ToolExecutionAgent.ts
+├── 🗂️ Source Code
+│   ├── src/
+│   │   ├── agents/                # AI agent implementations
+│   │   │   ├── base/              # Base agent classes
+│   │   │   ├── personal-assistant/ # Primary communication interface
+│   │   │   ├── gemini/            # Strategic planning agents  
+│   │   │   ├── claude/            # Execution & coding agents
+│   │   │   └── ollama/            # Local AI agents (Qwen3)
+│   │   │
+│   │   ├── communication/         # Multi-channel communication
+│   │   │   ├── channels/          # SMS, MMS, Google Chat
+│   │   │   ├── formatters/        # Mobile-optimized formatting
+│   │   │   ├── processors/        # Content processing
+│   │   │   └── router/            # Intelligent routing
+│   │   │
+│   │   ├── knowledge/             # RAG & knowledge management
+│   │   │   ├── stores/            # Vector, Graph, Relational stores
+│   │   │   ├── search/            # Semantic search engine
+│   │   │   ├── rag/               # RAG system implementation
+│   │   │   ├── ingestion/         # Document processing pipeline
+│   │   │   ├── context/           # Context management
+│   │   │   └── coordination/      # Cross-store coordination
+│   │   │
+│   │   ├── integrations/          # External service integrations
+│   │   │   ├── ai/                # Claude, Gemini, Ollama clients
+│   │   │   ├── communication/     # Twilio, Google services
+│   │   │   └── storage/           # Database connectors
+│   │   │
+│   │   ├── context/               # Advanced context management
+│   │   │   ├── managers/          # Session & handoff management
+│   │   │   ├── storage/           # Hot/Warm/Cold storage tiers
+│   │   │   └── compression/       # Context optimization
+│   │   │
+│   │   ├── visual/                # Executive briefing generation
+│   │   │   ├── charts/            # Chart generation
+│   │   │   ├── generators/        # Visual content creation
+│   │   │   ├── templates/         # Executive templates
+│   │   │   └── optimizers/        # Mobile optimization
+│   │   │
+│   │   ├── api/                   # REST API layer
+│   │   ├── database/              # Database models & migrations
+│   │   ├── queue/                 # Background job processing
+│   │   ├── utils/                 # Shared utilities
+│   │   ├── types/                 # TypeScript type definitions
+│   │   └── server.ts              # Main application entry
 │   │
-│   ├── communication/
-│   │   ├── channels/
-│   │   │   ├── SMS.ts
-│   │   │   ├── MMS.ts
-│   │   │   ├── GoogleChat.ts
-│   │   │   └── Email.ts
-│   │   ├── processors/
-│   │   │   ├── TextProcessor.ts
-│   │   │   ├── ImageProcessor.ts
-│   │   │   ├── VoiceProcessor.ts
-│   │   │   └── VideoProcessor.ts
-│   │   └── Router.ts
+│   ├── tests/                     # Comprehensive test suite
+│   │   ├── unit/                  # Unit tests (115+ passing)
+│   │   ├── integration/           # Integration tests (with real DBs)
+│   │   ├── e2e/                   # End-to-end tests
+│   │   ├── fixtures/              # Test data
+│   │   └── setup/                 # Test configuration
 │   │
-│   ├── knowledge/
-│   │   ├── stores/
-│   │   │   ├── VectorStore.ts
-│   │   │   ├── GraphStore.ts
-│   │   │   └── RelationalStore.ts
-│   │   ├── ingestion/
-│   │   │   ├── DocumentIngestion.ts
-│   │   │   ├── CodeIngestion.ts
-│   │   │   └── ConversationIngestion.ts
-│   │   └── retrieval/
-│   │       ├── RAG.ts
-│   │       ├── SemanticSearch.ts
-│   │       └── ContextBuilder.ts
-│   │
-│   ├── context/
-│   │   ├── managers/
-│   │   │   ├── ContextManager.ts
-│   │   │   ├── SessionManager.ts
-│   │   │   └── HandoffManager.ts
-│   │   ├── storage/
-│   │   │   ├── HotStorage.ts (Redis)
-│   │   │   ├── WarmStorage.ts (PostgreSQL)
-│   │   │   └── ColdStorage.ts (Vector DB)
-│   │   └── compression/
-│   │       ├── Summarizer.ts
-│   │       └── Optimizer.ts
-│   │
-│   ├── visual/
-│   │   ├── generators/
-│   │   │   ├── ChartGenerator.ts
-│   │   │   ├── DashboardGenerator.ts
-│   │   │   └── DiagramGenerator.ts
-│   │   ├── templates/
-│   │   │   ├── ExecutiveTemplates.ts
-│   │   │   └── StatusTemplates.ts
-│   │   └── optimizers/
-│   │       ├── MobileOptimizer.ts
-│   │       └── CompressionOptimizer.ts
-│   │
-│   ├── api/
-│   │   ├── routes/
-│   │   ├── middleware/
-│   │   └── controllers/
-│   │
-│   ├── database/
-│   │   ├── models/
-│   │   ├── migrations/
-│   │   └── seeds/
-│   │
-│   ├── queue/
-│   │   ├── workers/
-│   │   └── jobs/
-│   │
-│   ├── integrations/
-│   │   ├── ai/
-│   │   ├── communication/
-│   │   └── storage/
-│   │
-│   ├── utils/
-│   ├── types/
-│   └── server.ts
+│   └── examples/                  # Usage examples & demos
+│       ├── dual-cli-rag.ts        # RAG with local AI
+│       └── rag-with-cli.ts        # CLI integration examples
 │
-├── frontend/
-│   ├── pages/
-│   ├── components/
-│   ├── hooks/
-│   └── styles/
+├── 🔧 Infrastructure & Tools
+│   ├── scripts/                   # Setup & deployment scripts
+│   │   ├── setup-dev-db.sh        # Development database setup
+│   │   ├── setup-test-db.js       # Test database configuration
+│   │   ├── setup/                 # Installation scripts
+│   │   ├── migration/             # Database migrations
+│   │   └── deployment/            # Production deployment
+│   │
+│   ├── docs/                      # Technical documentation
+│   │   ├── DATABASE_SETUP_DEV.md  # Database setup guide
+│   │   ├── agents/                # Agent architecture docs
+│   │   ├── api/                   # API documentation
+│   │   └── architecture/          # System architecture
+│   │
+│   ├── config/                    # Configuration templates
+│   │   └── private.example.json   # Private config template
+│   │
+│   └── docker/                    # Docker configurations
+│       ├── backend/               # Backend container setup
+│       ├── frontend/              # Frontend container (future)
+│       └── database/              # Database initialization
 │
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   ├── e2e/
-│   └── fixtures/
+├── 🐳 Development Environment
+│   ├── logs/                      # Application logs (git-ignored)
+│   ├── dist/                      # Compiled output (git-ignored)
+│   ├── node_modules/              # Dependencies (git-ignored)
+│   └── .env                       # Local environment (git-ignored)
 │
-├── scripts/
-│   ├── setup/
-│   ├── migration/
-│   └── deployment/
-│
-├── docs/
-│   ├── api/
-│   ├── agents/
-│   └── architecture/
-│
-└── docker/
-    ├── backend/
-    ├── frontend/
-    └── database/
+└── ✨ Clean Development
+    ├── .gitignore patterns prevent test-*.js, debug-*.js clutter
+    ├── Proper separation of infrastructure vs temporary files
+    ├── Professional repository structure for code reviews
+    └── Clear developer onboarding experience
 ```
 
 ### Architecture Design Principles
