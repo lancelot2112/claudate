@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import logger from '../../utils/logger';
+// import logger from '../../utils/logger'; // Temporarily disabled to debug
 
 export interface ClaudeCLIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -40,7 +40,7 @@ export class ClaudeCLIClient {
       ...customConfig
     };
 
-    logger.info('ClaudeCLI client initialized', { 
+    console.log('ClaudeCLI client initialized', { 
       timeout: this.config.timeout,
       model: this.config.model 
     });
@@ -50,10 +50,10 @@ export class ClaudeCLIClient {
     const startTime = Date.now();
     
     try {
-      logger.debug('Sending message to Claude CLI', {
-        messageCount: request.messages.length,
-        hasSystem: !!request.system
-      });
+      // logger.debug('Sending message to Claude CLI', {
+      //   messageCount: request.messages.length,
+      //   hasSystem: !!request.system
+      // });
 
       // Prepare the prompt for Claude CLI
       const prompt = this.formatPromptForCLI(request);
@@ -69,7 +69,7 @@ export class ClaudeCLIClient {
       
       this.updateCostTracker(estimatedInputTokens, estimatedOutputTokens);
 
-      logger.info('Claude CLI response received', {
+      console.log('Claude CLI response received', {
         responseLength: response.content.length,
         processingTime,
         estimatedTokens: estimatedInputTokens + estimatedOutputTokens
@@ -86,7 +86,7 @@ export class ClaudeCLIClient {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('Claude CLI request failed', { 
+      console.error('Claude CLI request failed', { 
         error: errorMessage,
         processingTime: Date.now() - startTime
       });
@@ -109,70 +109,57 @@ export class ClaudeCLIClient {
   }
 
   private async executeCLICommand(prompt: string, request: ClaudeCLIRequest): Promise<{ content: string }> {
+    // Use the exact working implementation from our test
     return new Promise((resolve, reject) => {
-      // Prepare CLI arguments for Claude CLI
       const args = ['--print', '--output-format', 'json'];
-      
-      // Add model if specified (Claude CLI format)
       if (this.config.model) {
         args.push('--model', this.config.model);
       }
-
-      logger.debug('Executing Claude CLI command', { args });
-
-      // Spawn Claude CLI process
+      
       const cliProcess = spawn('claude', args, {
         stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: this.config.timeout
+        cwd: process.cwd(),
+        env: process.env
       });
 
       let stdout = '';
       let stderr = '';
 
-      // Collect stdout
-      cliProcess.stdout?.on('data', (data: Buffer) => {
-        stdout += data.toString();
-      });
-
-      // Collect stderr
-      cliProcess.stderr?.on('data', (data: Buffer) => {
-        stderr += data.toString();
-      });
-
-      // Handle process completion
-      cliProcess.on('close', (code: number | null) => {
-        if (code === 0) {
-          const content = this.cleanCLIResponse(stdout);
-          resolve({ content });
-        } else {
-          const error = stderr || `Claude CLI exited with code ${code}`;
-          logger.error('Claude CLI process failed', { 
-            code, 
-            stderr, 
-            stdout: stdout.substring(0, 500),
-            prompt: prompt.substring(0, 200) 
-          });
-          reject(new Error(error));
-        }
-      });
-
-      // Handle process errors
-      cliProcess.on('error', (error: Error) => {
-        logger.error('Claude CLI process error', { error: error.message });
-        reject(new Error(`Failed to start Claude CLI: ${error.message}`));
-      });
-
-      // Send the prompt to stdin
-      cliProcess.stdin?.write(prompt);
-      cliProcess.stdin?.end();
-
-      // Set timeout
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (!cliProcess.killed) {
           cliProcess.kill('SIGTERM');
           reject(new Error('Claude CLI request timed out'));
         }
       }, this.config.timeout);
+
+      cliProcess.stdout?.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      cliProcess.stderr?.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      cliProcess.on('close', (code) => {
+        clearTimeout(timeoutId);
+        if (code === 0) {
+          const content = this.cleanCLIResponse(stdout);
+          resolve({ content });
+        } else {
+          const error = stderr || `Claude CLI exited with code ${code}`;
+          reject(new Error(error));
+        }
+      });
+
+      cliProcess.on('error', (error) => {
+        clearTimeout(timeoutId);
+        reject(new Error(`Failed to start Claude CLI: ${error.message}`));
+      });
+
+      cliProcess.on('spawn', () => {
+        cliProcess.stdin?.write(prompt);
+        cliProcess.stdin?.end();
+      });
     });
   }
 
@@ -191,7 +178,7 @@ export class ClaudeCLIClient {
         return rawResponse.trim();
       }
     } catch (error) {
-      logger.warn('Failed to parse Claude CLI JSON response, using raw text', { 
+      console.warn('Failed to parse Claude CLI JSON response, using raw text', { 
         error: error instanceof Error ? error.message : String(error),
         rawResponse: rawResponse.substring(0, 200) 
       });
@@ -226,7 +213,7 @@ export class ClaudeCLIClient {
 
   public async healthCheck(): Promise<boolean> {
     try {
-      logger.debug('Performing Claude CLI health check');
+      console.log('Performing Claude CLI health check');
       
       // Try a simple command to verify CLI availability
       const result = await this.executeCLICommand('Hello, this is a test. Please respond with "OK".', {
@@ -235,10 +222,10 @@ export class ClaudeCLIClient {
 
       const isHealthy = result.content.toLowerCase().includes('ok');
       
-      logger.info('Claude CLI health check completed', { healthy: isHealthy });
+      console.log('Claude CLI health check completed', { healthy: isHealthy });
       return isHealthy;
     } catch (error) {
-      logger.error('Claude CLI health check failed', { 
+      console.error('Claude CLI health check failed', { 
         error: error instanceof Error ? error.message : String(error)
       });
       return false;
@@ -255,7 +242,7 @@ export class ClaudeCLIClient {
 
   public updateConfig(newConfig: Partial<ClaudeCLIConfig>): void {
     this.config = { ...this.config, ...newConfig };
-    logger.info('Claude CLI configuration updated', { newConfig });
+    console.log('Claude CLI configuration updated', { newConfig });
   }
 }
 
