@@ -40,7 +40,7 @@ describe('Context Management Integration', () => {
 
     anthropicClient = new AnthropicClient({
       apiKey: process.env.ANTHROPIC_API_KEY || 'test-key',
-      model: 'claude-3-haiku-20240307'
+      defaultModel: 'claude-3-haiku-20240307'
     });
 
     contextCompressor = new ContextCompressor({
@@ -177,12 +177,12 @@ describe('Context Management Integration', () => {
       const sessionContext = await contextManager.getSessionContext(testSessionId, 10);
       
       expect(sessionContext.length).toBe(messages.length);
-      expect(sessionContext[0].sessionId).toBe(testSessionId);
+      expect(sessionContext[0]?.sessionId).toBe(testSessionId);
       
       // Should be sorted by timestamp (most recent first)
       for (let i = 0; i < sessionContext.length - 1; i++) {
-        expect(sessionContext[i].timestamp.getTime()).toBeGreaterThanOrEqual(
-          sessionContext[i + 1].timestamp.getTime()
+        expect(sessionContext[i]?.timestamp.getTime()).toBeGreaterThanOrEqual(
+          sessionContext[i + 1]?.timestamp.getTime() || 0
         );
       }
     });

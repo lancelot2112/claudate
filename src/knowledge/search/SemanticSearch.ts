@@ -29,6 +29,49 @@ export interface EmbeddingProvider {
   getModel(): string;
 }
 
+export class MockEmbeddingProvider implements EmbeddingProvider {
+  private dimensions: number;
+  private model: string;
+
+  constructor(dimensions = 384) {
+    this.dimensions = dimensions;
+    this.model = 'mock-embedding-provider';
+  }
+
+  async generateEmbedding(text: string): Promise<number[]> {
+    // Generate deterministic mock embeddings based on text hash
+    const hash = this.hashString(text);
+    const embedding = new Array(this.dimensions);
+    
+    for (let i = 0; i < this.dimensions; i++) {
+      // Use hash and position to generate deterministic values
+      embedding[i] = Math.sin((hash + i) * 0.01) * 0.5;
+    }
+    
+    // Normalize the embedding
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    return embedding.map(val => val / magnitude);
+  }
+
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  getDimensions(): number {
+    return this.dimensions;
+  }
+
+  getModel(): string {
+    return this.model;
+  }
+}
+
 export class OpenAIEmbeddingProvider implements EmbeddingProvider {
   private apiKey: string;
   private model: string;

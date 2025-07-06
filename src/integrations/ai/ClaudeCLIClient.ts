@@ -95,52 +95,45 @@ export class ClaudeCLIClient {
   }
 
   private formatPromptForCLI(request: ClaudeCLIRequest): string {
-    let prompt = '';
-
-    // Add system message if provided
-    if (request.system) {
-      prompt += `System: ${request.system}\n\n`;
+    // For Claude CLI, we just need the user message content
+    // The CLI handles the conversation format internally
+    
+    if (request.messages.length === 0) {
+      return '';
     }
 
-    // Add conversation history
-    for (const message of request.messages) {
-      if (message.role === 'system') {
-        prompt += `System: ${message.content}\n\n`;
-      } else if (message.role === 'user') {
-        prompt += `Human: ${message.content}\n\n`;
-      } else if (message.role === 'assistant') {
-        prompt += `Assistant: ${message.content}\n\n`;
-      }
+    // Get the last user message
+    const lastUserMessage = request.messages
+      .filter(msg => msg.role === 'user')
+      .pop();
+
+    if (!lastUserMessage) {
+      return '';
     }
 
-    // Ensure we end with a user message for CLI
-    if (!prompt.trim().endsWith('Human:')) {
-      prompt += 'Please provide a comprehensive response based on the above context.\n\n';
-    }
-
-    return prompt.trim();
+    // For simple prompts, just return the content
+    return lastUserMessage.content;
   }
 
   private async executeCLICommand(prompt: string, request: ClaudeCLIRequest): Promise<{ content: string }> {
     return new Promise((resolve, reject) => {
-      // Prepare CLI arguments
-      const args = ['--no-input-wrap'];
+      // Use --print for non-interactive output and JSON format
+      const args = ['--print', '--output-format', 'json', prompt];
       
-      // Add model if specified
-      if (request.max_tokens) {
-        args.push('--max-tokens', request.max_tokens.toString());
-      }
-
-      if (request.temperature) {
-        args.push('--temperature', request.temperature.toString());
-      }
-
-      logger.debug('Executing Claude CLI command', { args });
+      // Note: Claude CLI doesn't support max_tokens or temperature via command line
+      // These parameters are ignored for CLI execution
+      
+      logger.error('Executing Claude CLI command', { 
+        args, 
+        prompt: prompt.substring(0, 100),
+        fullCommand: `claude ${args.join(' ')}`
+      });
 
       // Spawn Claude CLI process
       const cliProcess = spawn('claude', args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: this.config.timeout
+        stdio: ['ignore', 'pipe', 'pipe'], // ignore stdin, pipe stdout/stderr
+        timeout: this.config.timeout,
+        env: process.env // Pass environment variables
       });
 
       let stdout = '';
@@ -158,11 +151,14 @@ export class ClaudeCLIClient {
 
       // Handle process completion
       cliProcess.on('close', (code: number | null) => {
+        logger.error('Claude CLI process closed', { code, stdout: stdout.substring(0, 500), stderr: stderr.substring(0, 500) });
+        
         if (code === 0) {
           const content = this.cleanCLIResponse(stdout);
           resolve({ content });
         } else {
           const error = stderr || `Claude CLI exited with code ${code}`;
+          logger.error('Claude CLI process failed', { code, stderr, stdout: stdout.substring(0, 200) });
           reject(new Error(error));
         }
       });
@@ -172,10 +168,6 @@ export class ClaudeCLIClient {
         logger.error('Claude CLI process error', { error: error.message });
         reject(new Error(`Failed to start Claude CLI: ${error.message}`));
       });
-
-      // Send the prompt to stdin
-      cliProcess.stdin?.write(prompt);
-      cliProcess.stdin?.end();
 
       // Set timeout
       setTimeout(() => {
@@ -188,21 +180,35 @@ export class ClaudeCLIClient {
   }
 
   private cleanCLIResponse(rawResponse: string): string {
-    // Remove any CLI-specific formatting or metadata
-    let cleaned = rawResponse.trim();
-    
-    // Remove common CLI prefixes if present
-    const prefixesToRemove = [
-      /^Assistant:\s*/,
-      /^Claude:\s*/,
-      /^Response:\s*/
-    ];
+    try {
+      // Parse JSON response from Claude CLI
+      const jsonResponse = JSON.parse(rawResponse.trim());
+      
+      // Extract the actual content from the JSON response
+      if (jsonResponse.result) {
+        return jsonResponse.result;
+      } else if (jsonResponse.content) {
+        return jsonResponse.content;
+      } else {
+        return rawResponse.trim();
+      }
+    } catch (error) {
+      // Fallback to original text cleaning if JSON parsing fails
+      let cleaned = rawResponse.trim();
+      
+      // Remove common CLI prefixes if present
+      const prefixesToRemove = [
+        /^Assistant:\s*/,
+        /^Claude:\s*/,
+        /^Response:\s*/
+      ];
 
-    for (const prefix of prefixesToRemove) {
-      cleaned = cleaned.replace(prefix, '');
+      for (const prefix of prefixesToRemove) {
+        cleaned = cleaned.replace(prefix, '');
+      }
+
+      return cleaned.trim();
     }
-
-    return cleaned.trim();
   }
 
   private updateCostTracker(inputTokens: number, outputTokens: number): void {
@@ -215,18 +221,29 @@ export class ClaudeCLIClient {
     this.costTracker.set(today, currentCost + estimatedCost);
   }
 
+  public async sendCodingRequest(request: ClaudeCLIRequest): Promise<ClaudeCLIResponse> {
+    // For coding requests, we can add specific system prompts or handling
+    const codingRequest = {
+      ...request,
+      system: request.system || 'You are a helpful coding assistant. Provide clear, well-commented code examples.'
+    };
+    
+    return this.sendMessage(codingRequest);
+  }
+
   public async healthCheck(): Promise<boolean> {
     try {
       logger.debug('Performing Claude CLI health check');
       
-      // Try a simple command to verify CLI availability
-      const result = await this.executeCLICommand('Hello, this is a test. Please respond with "OK".', {
-        messages: [{ role: 'user', content: 'Hello, this is a test. Please respond with "OK".' }]
+      // Simplified health check with a very basic prompt
+      const result = await this.executeCLICommand('Say OK', {
+        messages: [{ role: 'user', content: 'Say OK' }]
       });
 
+      logger.debug('Health check raw result', { content: result.content });
       const isHealthy = result.content.toLowerCase().includes('ok');
       
-      logger.info('Claude CLI health check completed', { healthy: isHealthy });
+      logger.info('Claude CLI health check completed', { healthy: isHealthy, content: result.content });
       return isHealthy;
     } catch (error) {
       logger.error('Claude CLI health check failed', { 

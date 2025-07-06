@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem';
 import { VectorStore } from '../../../src/knowledge/stores/VectorStore';
 import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSearch';
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
-import { GeminiClient } from '../../../src/integrations/ai/GeminiClient';
+import { ClaudeCLIClient } from '../../../src/integrations/ai/ClaudeCLIClient';
+import { GeminiCLIClient } from '../../../src/integrations/ai/GeminiCLIClient';
+import { Qwen3RAGAdapter } from '../../../src/integrations/ai/Qwen3RAGAdapter';
 import { 
   Document, 
   DocumentType,
@@ -15,8 +16,9 @@ describe('RAG System Integration', () => {
   let ragSystem: RAGSystem;
   let vectorStore: VectorStore;
   let semanticSearch: SemanticSearchEngine;
-  let anthropicClient: AnthropicClient;
-  let geminiClient: GeminiClient;
+  let claudeCLIClient: ClaudeCLIClient;
+  let geminiCLIClient: GeminiCLIClient;
+  let qwen3Adapter: Qwen3RAGAdapter;
 
   const knowledgeBase: Document[] = [
     {
@@ -149,22 +151,26 @@ describe('RAG System Integration', () => {
   ];
 
   beforeAll(async () => {
-    // Initialize AI clients
-    anthropicClient = new AnthropicClient({
-      apiKey: process.env.ANTHROPIC_API_KEY || 'test-key',
-      defaultModel: 'claude-3-haiku-20240307'
+    // Initialize CLI clients (no API keys required)
+    claudeCLIClient = new ClaudeCLIClient({
+      model: 'claude-3-haiku-20240307',
+      timeout: 30000,
+      maxRetries: 3
     });
 
-    geminiClient = new GeminiClient({
-      apiKey: process.env.GEMINI_API_KEY || 'test-key',
-      defaultModel: 'gemini-pro'
+    geminiCLIClient = new GeminiCLIClient({
+      model: 'gemini-1.5-flash',
+      timeout: 30000,
+      maxRetries: 3
     });
+
+    qwen3Adapter = new Qwen3RAGAdapter('qwen3:8b');
 
     // Initialize vector store
     vectorStore = new VectorStore({
       provider: 'chroma',
-      collectionName: 'rag-test-collection',
-      dimensions: 1536
+      collectionName: `rag-ollama-test-${Date.now()}`, // Unique collection for each test run
+      dimensions: 384 // Ollama all-minilm dimensions
     });
 
     // Initialize semantic search
@@ -179,18 +185,24 @@ describe('RAG System Integration', () => {
       {}
     );
 
-    // Initialize RAG system
+    // Initialize RAG system with multiple providers (CLI clients + Qwen3)
     const ragProviders = [
       {
-        name: 'claude' as const,
-        client: anthropicClient,
-        priority: 1,
+        name: 'qwen3' as const,
+        client: qwen3Adapter,
+        priority: 1, // Qwen3 as primary (local, no API costs)
         maxContextLength: 8000
       },
       {
-        name: 'gemini' as const,
-        client: geminiClient,
+        name: 'claude-cli' as const,
+        client: claudeCLIClient,
         priority: 2,
+        maxContextLength: 8000
+      },
+      {
+        name: 'gemini-cli' as const,
+        client: geminiCLIClient,
+        priority: 3,
         maxContextLength: 8000
       }
     ];
@@ -214,6 +226,9 @@ describe('RAG System Integration', () => {
   }, 30000);
 
   afterAll(async () => {
+    if (qwen3Adapter) {
+      await qwen3Adapter.shutdown();
+    }
     await vectorStore.shutdown();
   }, 10000);
 
@@ -420,7 +435,7 @@ describe('RAG System Integration', () => {
       const anthropicProviders = [
         {
           name: 'claude' as const,
-          client: anthropicClient,
+          client: claudeCLIClient,
           priority: 1,
           maxContextLength: 6000
         }
@@ -447,6 +462,39 @@ describe('RAG System Integration', () => {
       expect(response.answer.toLowerCase()).toMatch(/supervised|unsupervised|learning/);
     });
 
+    it('should work with Qwen3 local model', async () => {
+      // Test Qwen3 specifically to ensure local AI integration works
+      const qwen3Providers = [
+        {
+          name: 'qwen3' as const,
+          client: qwen3Adapter,
+          priority: 1,
+          maxContextLength: 8000
+        }
+      ];
+
+      const qwen3RAG = new RAGSystem(
+        semanticSearch,
+        qwen3Providers,
+        {
+          maxContextLength: 8000,
+          retrievalStrategy: 'similarity'
+        }
+      );
+
+      const response = await qwen3RAG.askQuestion(
+        'What are the main types of machine learning?',
+        [],
+        3
+      );
+
+      expect(response.answer).toBeDefined();
+      expect(response.answer.length).toBeGreaterThan(0);
+      expect(response.sources.length).toBeGreaterThan(0);
+      expect(response.answer.toLowerCase()).toMatch(/supervised|unsupervised|machine.*learning/);
+      expect(response.confidence).toBeGreaterThan(0.5);
+    }, 120000);
+
     it('should work with Gemini', async () => {
       if (!process.env.GEMINI_API_KEY) {
         console.log('Skipping Gemini test - no API key provided');
@@ -456,7 +504,7 @@ describe('RAG System Integration', () => {
       const geminiProviders = [
         {
           name: 'gemini' as const,
-          client: geminiClient,
+          client: geminiCLIClient,
           priority: 1,
           maxContextLength: 6000
         }
@@ -537,7 +585,7 @@ describe('RAG System Integration', () => {
       const emptyProviders = [
         {
           name: 'claude' as const,
-          client: anthropicClient,
+          client: claudeCLIClient,
           priority: 1,
           maxContextLength: 4000
         }
@@ -639,7 +687,7 @@ describe('RAG System Integration', () => {
       const smallContextProviders = [
         {
           name: 'claude' as const,
-          client: anthropicClient,
+          client: claudeCLIClient,
           priority: 1,
           maxContextLength: 2000
         }

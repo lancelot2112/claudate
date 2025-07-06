@@ -1,4 +1,7 @@
 import { ChromaClient, Collection } from 'chromadb';
+import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
+import { OllamaEmbeddingFunction } from '../../integrations/ai/OllamaEmbeddingFunction';
+import { MockEmbeddingFunction } from '../../integrations/ai/MockEmbeddingFunction';
 import { 
   IVectorStore, 
   Document, 
@@ -22,24 +25,48 @@ export class VectorStore implements IVectorStore {
     this.config = {
       provider: 'chroma',
       collectionName: 'claudate_documents',
-      dimensions: 1536, // OpenAI text-embedding-ada-002 dimensions
+      dimensions: process.env.EMBEDDING_PROVIDER === 'ollama' ? 384 : 1536, // Ollama all-minilm uses 384, others use 1536
       distanceMetric: 'cosine',
       connectionString: config.knowledge?.vectorStore?.url || 'http://localhost:8000',
       ...customConfig
     };
 
-    // Initialize ChromaDB client
+    // Initialize ChromaDB client with v2 API
+    const connectionString = this.config.connectionString || 'http://localhost:8000';
+    const url = new URL(connectionString);
     this.client = new ChromaClient({
-      path: this.config.connectionString
+      host: url.hostname,
+      port: parseInt(url.port) || 8000,
+      ssl: url.protocol === 'https:'
     });
 
-    // Initialize embedding function - create a simple dummy function for testing
-    this.embeddingFunction = {
-      generate: async (texts: string[]) => {
-        // Return dummy embeddings (1536 dimensions filled with random values)
-        return texts.map(() => Array(1536).fill(0).map(() => Math.random()));
+    // Initialize embedding function - prefer Ollama for local embeddings with fallback
+    const embeddingProvider = process.env.EMBEDDING_PROVIDER || 'default';
+    
+    if (embeddingProvider === 'ollama') {
+      try {
+        this.embeddingFunction = new OllamaEmbeddingFunction('all-minilm');
+        logger.info('Using Ollama embeddings with all-minilm model');
+      } catch (error) {
+        logger.warn('Failed to initialize Ollama embeddings, falling back to mock', { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+        this.embeddingFunction = new MockEmbeddingFunction(1536);
       }
-    };
+    } else if (embeddingProvider === 'mock' || process.env.NODE_ENV === 'test') {
+      this.embeddingFunction = new MockEmbeddingFunction(1536);
+      logger.info('Using mock embeddings for testing');
+    } else {
+      try {
+        this.embeddingFunction = new DefaultEmbeddingFunction();
+        logger.info('Using default ChromaDB embeddings');
+      } catch (error) {
+        logger.warn('Failed to initialize default embeddings, falling back to mock', { 
+          error: error instanceof Error ? error.message : String(error) 
+        });
+        this.embeddingFunction = new MockEmbeddingFunction(1536);
+      }
+    }
 
     logger.info('VectorStore initialized', { 
       provider: this.config.provider,
