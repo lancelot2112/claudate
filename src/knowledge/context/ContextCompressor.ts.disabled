@@ -2,8 +2,8 @@ import {
   ContextMessage,
   ContextEntry
 } from '../../types/Knowledge.js';
-import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
-import { GeminiClient } from '../../integrations/ai/GeminiClient.js';
+// TODO: Update ContextCompressor to use Ollama client after base migration
+// import { OllamaClient } from '../../integrations/ai/OllamaClient.js';
 import logger from '../../utils/logger.js';
 
 export interface CompressionConfig {
@@ -37,14 +37,14 @@ export interface SummarizationOptions {
 }
 
 export class ContextCompressor {
-  private anthropicClient?: AnthropicClient;
-  private geminiClient?: GeminiClient;
+  // TODO: Add back ollamaClient after migration
+  // private ollamaClient?: OllamaClient;
   private config: CompressionConfig;
 
   constructor(
-    config: Partial<CompressionConfig> = {},
-    anthropicClient?: AnthropicClient,
-    geminiClient?: GeminiClient
+    config: Partial<CompressionConfig> = {}
+    // TODO: Add back ollamaClient parameter
+    // ollamaClient?: OllamaClient
   ) {
     this.config = {
       maxInputLength: 10000,
@@ -56,8 +56,8 @@ export class ContextCompressor {
       ...config
     };
 
-    this.anthropicClient = anthropicClient;
-    this.geminiClient = geminiClient;
+    // TODO: Initialize ollamaClient after migration
+    // this.ollamaClient = ollamaClient;
 
     logger.info('ContextCompressor initialized', { config: this.config });
   }

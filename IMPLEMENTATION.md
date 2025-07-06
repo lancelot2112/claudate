@@ -429,15 +429,18 @@ This document provides a comprehensive piecewise implementation plan for the Cla
 
 ### 🔧 **Technical Issue Documentation**
 
-#### **Logger Architecture Conflict - Detailed Analysis**
+#### **External AI Integration Challenges - Comprehensive Analysis**
 
-**Issue**: Winston logger import chain interferes with child process spawning for CLI tools
+**Migration Decision**: Transition from Claude/Gemini to Ollama-first architecture due to fundamental integration complexity and reliability concerns.
 
-**Discovery Process**:
-1. Claude CLI works perfectly when called manually: `echo "test" | claude --print --output-format json --model sonnet` ✅
-2. Claude CLI works perfectly in isolated Node.js scripts ✅
-3. Claude CLI fails in our application with exit code 1 ❌
-4. **Root Cause Found**: Importing logger module affects global process environment
+#### **1. CLI Integration Failures**
+
+**Issue**: Claude CLI integration causes consistent test failures despite working in isolation
+
+**Root Cause Analysis**:
+1. **Logger Architecture Conflict**: Winston logger import chain interferes with child process spawning
+2. **Environment Variable Pollution**: dotenv.config() loads 55+ variables that conflict with CLI execution
+3. **Complex Dependency Chain**: `logger.ts` → `config.ts` → `dotenv.config()` → `winston` → `DailyRotateFile`
 
 **Technical Evidence**:
 ```javascript
@@ -452,32 +455,51 @@ const cliProcess = spawn('claude', ['--print', '--output-format', 'json']);
 // Result: Exit code 1, no output
 ```
 
-**Logger Stack Analysis**:
-- `logger.ts` → imports `config.ts` → imports `dotenv.config()` → imports `winston` → imports `DailyRotateFile`
-- Side effects: File system operations, directory creation, Winston transport initialization
-- Impact: Global environment modifications that interfere with child process execution
+**Impact**: 6/121 tests failing (5% failure rate) - all CLI-related integrations
 
-**Affected Files**:
-- ❌ `RAGProviderFactory.ts` - imports logger, affects CLI provider creation  
-- ❌ `RAGSystem.ts` - imports logger indirectly via other modules
-- ❌ All test files importing RAG components - inherit logger chain
-- ✅ `ClaudeCLIClient.ts` - when logger imports removed, works perfectly
+#### **2. Architecture Complexity Issues**
 
-**Solutions Evaluated**:
-1. **Conditional Logger**: Only import when needed ⚡ Partial fix
-2. **Logger Refactor**: Remove global side effects ⭐ Recommended
-3. **Lazy Loading**: Defer logger initialization ⚡ Partial fix
-4. **Process Isolation**: Separate CLI processes entirely 🔄 Complex
+**API Key Management Burden**:
+- Multiple external service dependencies (Anthropic, Google)
+- Secret management across different providers
+- Network dependency for all AI operations
+- Rate limiting and cost tracking complexity
 
-**Recommended Fix for Phase 6**:
-```typescript
-// Current problematic pattern:
-import logger from './logger'; // Global side effects on import
+**CLI Tool Limitations**:
+- Designed for human interaction, not programmatic integration
+- JSON parsing inconsistencies between CLI versions
+- Process isolation challenges in Node.js environment
+- Timeout and retry logic complexity
 
-// Recommended pattern:  
-import { createLogger } from './logger'; // Factory function, no side effects
-const logger = createLogger(); // Initialize when needed
-```
+#### **3. Migration Strategy: Ollama-First Architecture**
+
+**Decision Rationale**:
+1. **Reliability**: Eliminate external API dependencies and CLI integration issues
+2. **Privacy**: All AI processing happens locally
+3. **Cost Control**: No usage-based pricing or rate limits
+4. **Architectural Simplicity**: Single provider to manage
+5. **Offline Capability**: Works without internet connectivity
+
+**Current Ollama Integration Status**:
+- ✅ Core OllamaClient fully functional
+- ✅ Embedding support (all-minilm model)
+- ✅ Multiple model support (qwen3:8b, deepseek-coder, codellama)
+- ✅ Qwen3Agent and Qwen3RAGAdapter working
+- ✅ No external dependencies or CLI tools required
+
+#### **4. Lessons Learned**
+
+**Integration Best Practices**:
+1. **Prefer Native APIs over CLI wrappers** when available
+2. **Minimize import-time side effects** in utility modules
+3. **Environment isolation** is critical for subprocess management
+4. **Local models** reduce external dependencies and improve reliability
+
+**Architectural Decisions**:
+- CLI tools should be avoided for programmatic integration
+- Local AI models provide better control and reliability
+- Dependency chains should be minimized to avoid side effects
+- Test environments should match production environments closely
 
 **Impact Assessment**:
 - **Severity**: Medium (affects 5% of test suite)

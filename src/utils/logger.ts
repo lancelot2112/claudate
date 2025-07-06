@@ -23,77 +23,142 @@ const colors = {
 // Tell winston that you want to link the colors defined above to the severity levels
 winston.addColors(colors);
 
-// Define which transports the logger must use
-const transports: winston.transport[] = [];
+// Check if we're in a test environment to avoid file operations
+const isTestEnvironment = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 
-// Console transport for development
-if (config.nodeEnv === 'development') {
-  transports.push(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
-        winston.format.colorize({ all: true }),
-        winston.format.printf(
-          (info) => `${info.timestamp} ${info.level}: ${info.message}`
-        )
-      ),
-    })
-  );
+// Lazy logger initialization to avoid file system operations during import
+let _logger: winston.Logger | null = null;
+
+function createLoggerInstance(): winston.Logger {
+  // Define which transports the logger must use
+  const transports: winston.transport[] = [];
+
+  // Console transport for development and test environments
+  if (config.nodeEnv === 'development' || isTestEnvironment) {
+    transports.push(
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
+          winston.format.colorize({ all: true }),
+          winston.format.printf(
+            (info) => `${info.timestamp} ${info.level}: ${info.message}`
+          )
+        ),
+        silent: isTestEnvironment, // Suppress console output during tests
+      })
+    );
+  }
+
+  // Only add file transports in non-test environments to avoid FS conflicts
+  if (!isTestEnvironment) {
+    // File transport for all environments
+    transports.push(
+      new DailyRotateFile({
+        filename: 'logs/claudate-%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.errors({ stack: true }),
+          winston.format.json()
+        ),
+      })
+    );
+
+    // Error file transport
+    transports.push(
+      new DailyRotateFile({
+        filename: 'logs/claudate-error-%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '30d',
+        level: 'error',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.errors({ stack: true }),
+          winston.format.json()
+        ),
+      })
+    );
+  }
+
+  // Create the logger instance
+  return winston.createLogger({
+    level: config.logLevel,
+    levels,
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.errors({ stack: true }),
+      winston.format.json()
+    ),
+    transports,
+    exitOnError: false,
+  });
 }
 
-// File transport for all environments
-transports.push(
-  new DailyRotateFile({
-    filename: 'logs/claudate-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '14d',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.errors({ stack: true }),
-      winston.format.json()
-    ),
-  })
-);
+// Lazy initialization function
+function getLogger(): winston.Logger {
+  if (!_logger) {
+    _logger = createLoggerInstance();
+  }
+  return _logger;
+}
 
-// Error file transport
-transports.push(
-  new DailyRotateFile({
-    filename: 'logs/claudate-error-%DATE%.log',
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '30d',
-    level: 'error',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.errors({ stack: true }),
-      winston.format.json()
-    ),
-  })
-);
+// Lazy logger proxy that implements the winston Logger interface
+const logger = {
+  error: (message: any, ...meta: any[]) => getLogger().error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().info(message, ...meta),
+  http: (message: any, ...meta: any[]) => getLogger().http(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().debug(message, ...meta),
+  child: (defaultMeta: any) => getLogger().child(defaultMeta),
+} as winston.Logger;
 
-// Create the logger
-const logger = winston.createLogger({
-  level: config.logLevel,
-  levels,
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  transports,
-  exitOnError: false,
-});
+// Create specialized loggers for different components (lazy initialization)
+export const agentLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'agent' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'agent' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'agent' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'agent' }).debug(message, ...meta),
+};
 
-// Create specialized loggers for different components
-export const agentLogger = logger.child({ component: 'agent' });
-export const communicationLogger = logger.child({ component: 'communication' });
-export const knowledgeLogger = logger.child({ component: 'knowledge' });
-export const contextLogger = logger.child({ component: 'context' });
-export const visualLogger = logger.child({ component: 'visual' });
-export const apiLogger = logger.child({ component: 'api' });
+export const communicationLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'communication' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'communication' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'communication' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'communication' }).debug(message, ...meta),
+};
+
+export const knowledgeLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'knowledge' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'knowledge' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'knowledge' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'knowledge' }).debug(message, ...meta),
+};
+
+export const contextLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'context' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'context' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'context' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'context' }).debug(message, ...meta),
+};
+
+export const visualLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'visual' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'visual' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'visual' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'visual' }).debug(message, ...meta),
+};
+
+export const apiLogger = {
+  error: (message: any, ...meta: any[]) => getLogger().child({ component: 'api' }).error(message, ...meta),
+  warn: (message: any, ...meta: any[]) => getLogger().child({ component: 'api' }).warn(message, ...meta),
+  info: (message: any, ...meta: any[]) => getLogger().child({ component: 'api' }).info(message, ...meta),
+  debug: (message: any, ...meta: any[]) => getLogger().child({ component: 'api' }).debug(message, ...meta),
+};
 
 // Helper functions for structured logging
 export const logAgentAction = (agentId: string, action: string, metadata?: any) => {

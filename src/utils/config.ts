@@ -24,17 +24,7 @@ export interface RedisConfig {
 }
 
 export interface AIConfig {
-  anthropic: {
-    apiKey: string;
-  };
-  google: {
-    apiKey: string;
-    projectId: string;
-  };
-  openai?: {
-    apiKey: string;
-  };
-  ollama?: {
+  ollama: {
     host: string;
     port: number;
     defaultModel: string;
@@ -172,16 +162,6 @@ export const config: AppConfig = {
   },
 
   ai: {
-    anthropic: {
-      apiKey: getEnvVar('ANTHROPIC_API_KEY'),
-    },
-    google: {
-      apiKey: getEnvVar('GOOGLE_AI_API_KEY'),
-      projectId: getEnvVar('GOOGLE_PROJECT_ID'),
-    },
-    openai: process.env.OPENAI_API_KEY ? {
-      apiKey: getEnvVar('OPENAI_API_KEY'),
-    } : undefined,
     ollama: {
       host: getEnvVar('OLLAMA_HOST', 'localhost'),
       port: getEnvNumber('OLLAMA_PORT', 11434),

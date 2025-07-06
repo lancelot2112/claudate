@@ -7,15 +7,12 @@ import {
   KnowledgeQuery
 } from '../../types/Knowledge';
 import { SemanticSearchEngine } from '../search/SemanticSearch';
-import { AnthropicClient } from '../../integrations/ai/AnthropicClient';
-import { GeminiClient } from '../../integrations/ai/GeminiClient';
-import { ClaudeCLIClient } from '../../integrations/ai/ClaudeCLIClient';
-import { GeminiCLIClient } from '../../integrations/ai/GeminiCLIClient';
+import { AIProvider, TextGenerationRequest } from '../../integrations/ai/AIProvider';
 import logger from '../../utils/logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli' | 'qwen3';
-  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient | any;
+  name: string;
+  client: AIProvider;
   priority: number;
   maxContextLength: number;
 }
@@ -316,68 +313,22 @@ Content: ${content}`;
       try {
         logger.debug('Attempting AI generation', { provider: provider.name });
         
-        if (provider.name === 'claude' && provider.client instanceof AnthropicClient) {
-          const response = await provider.client.sendMessage({
-            messages: [{ role: 'user', content: contextText }],
-            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
-            temperature: 0.3,
-            max_tokens: 2000
-          });
-          
-          return {
-            answer: response.content,
-            confidence: this.calculateConfidence(response.content, contextText)
-          };
-        } else if (provider.name === 'claude-cli' && provider.client instanceof ClaudeCLIClient) {
-          const response = await provider.client.sendMessage({
-            messages: [{ role: 'user', content: contextText }],
-            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
-            temperature: 0.3,
-            max_tokens: 2000
-          });
-          
-          return {
-            answer: response.content,
-            confidence: this.calculateConfidence(response.content, contextText)
-          };
-        } else if (provider.name === 'gemini-cli' && provider.client instanceof GeminiCLIClient) {
-          const response = await provider.client.sendMessage({
-            messages: [{ role: 'user', parts: [{ text: contextText }] }],
-            systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
-            temperature: 0.3,
-            maxOutputTokens: 2000
-          });
-          
-          return {
-            answer: response.content,
-            confidence: this.calculateConfidence(response.content, contextText)
-          };
-        } else if (provider.name === 'gemini' && provider.client instanceof GeminiClient) {
-          const response = await provider.client.sendMessage({
-            messages: [{ role: 'user', parts: [{ text: contextText }] }],
-            systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
-            temperature: 0.3,
-            maxOutputTokens: 2000
-          });
-          
-          return {
-            answer: response.content,
-            confidence: this.calculateConfidence(response.content, contextText)
-          };
-        } else if (provider.name === 'qwen3') {
-          // Handle Qwen3 provider via sendMessage method
-          const response = await provider.client.sendMessage({
-            messages: [{ role: 'user', content: contextText }],
-            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
-            temperature: 0.3,
-            max_tokens: 2000
-          });
-          
-          return {
-            answer: response.content,
-            confidence: this.calculateConfidence(response.content, contextText)
-          };
-        }
+        const request: TextGenerationRequest = {
+          messages: [
+            { role: 'user', content: contextText }
+          ],
+          systemPrompt: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+          temperature: 0.3,
+          maxTokens: 2000
+        };
+
+        const response = await provider.client.generateText(request);
+        
+        return {
+          answer: response.content,
+          confidence: this.calculateConfidence(response.content, contextText)
+        };
+        
       } catch (error) {
         logger.warn('AI provider failed, trying next', { 
           provider: provider.name, 
