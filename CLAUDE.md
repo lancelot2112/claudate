@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claudate is an agentic team framework that orchestrates specialized AI agents for collaborative software development. The system uses a three-layer architecture:
+Claudate is an agentic team framework that orchestrates specialized AI agents for collaborative software development using local AI models. The system uses a three-layer architecture with unified AI provider support:
 
 - **Personal Assistant Layer**: Primary communication interface and routing hub
-- **Strategic Layer (Gemini)**: High-level planning, architecture decisions, system design
-- **Execution Layer (Claude)**: Implementation, testing, debugging, and tool execution
+- **Strategic Layer (Local AI)**: High-level planning, architecture decisions, system design using local models
+- **Execution Layer (Local AI)**: Implementation, testing, debugging, and tool execution using local models
+- **Unified Provider System**: Abstract interface supporting multiple AI backends (currently Ollama)
 
 ## Development Commands
 
@@ -34,8 +35,13 @@ npm run agents:start # Start agent workers
 npm run agents:stop  # Stop agent workers
 npm run agents:test  # Test agent functionality
 
+# Ollama (Local AI)
+ollama serve         # Start Ollama server
+ollama pull qwen3:8b # Pull required models
+ollama list          # List available models
+
 # Docker
-docker-compose up    # Start all services
+docker-compose up    # Start all services (includes Ollama)
 docker-compose down  # Stop all services
 ```
 
@@ -45,8 +51,13 @@ docker-compose down  # Stop all services
 
 **Agent Types:**
 - **Personal Assistant Agent** (`src/agents/personal-assistant/`): Communication hub, routing, executive summaries
-- **Gemini Strategic Agents** (`src/agents/gemini/`): Planning, architecture, strategic thinking
-- **Claude Execution Agents** (`src/agents/claude/`): Coding, testing, debugging, tool execution
+- **Local Strategic Agents** (`src/agents/ollama/`): Planning, architecture, strategic thinking using local models
+- **Local Execution Agents** (`src/agents/ollama/`): Coding, testing, debugging, tool execution using local models
+
+**Unified AI Provider System:**
+- **AIProvider Interface** (`src/integrations/ai/AIProvider.ts`): Abstract interface for all AI providers
+- **OllamaProvider** (`src/integrations/ai/OllamaProvider.ts`): Local model integration via Ollama
+- **AIProviderFactory** (`src/integrations/ai/AIProvider.ts`): Centralized provider management and registration
 
 **Core Systems:**
 
@@ -75,8 +86,10 @@ docker-compose down  # Stop all services
 ### Key Integration Points
 
 **AI Service Integration** (`src/integrations/ai/`)
-- Claude API via @anthropic-ai/sdk for execution tasks
-- Gemini API via @google-ai/generativelanguage for strategic work
+- **Ollama Local Models**: Primary AI provider for all tasks
+- **Unified Provider Interface**: Consistent API across different AI backends
+- **Provider Registration**: Easy addition of new AI providers
+- **Health Monitoring**: Automatic provider health checks and failover
 - Content processing: Sharp (images), FFmpeg (audio/video)
 
 **Communication Services** (`src/integrations/communication/`)

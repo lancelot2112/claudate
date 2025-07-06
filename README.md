@@ -1,28 +1,31 @@
 # Claudate
 
-An agentic team framework that orchestrates specialized AI agents for collaborative software development and problem-solving.
+An agentic team framework that orchestrates specialized AI agents for collaborative software development and problem-solving, powered by local AI models for privacy, reliability, and cost-effectiveness.
 
 ## Overview
 
-Claudate combines the strengths of different AI models to create an efficient multi-agent system:
+Claudate creates an efficient multi-agent system using local AI models through Ollama:
 
-- **Gemini Agents**: Handle high-level planning, architecture decisions, and strategic thinking
-- **Claude Agents**: Focus on coding, testing, debugging, and tool execution tasks
+- **Local AI Agents**: Handle all AI operations using locally-hosted models
+- **Unified Architecture**: Consistent interface for adding different AI providers
+- **Privacy-First**: All processing happens locally with no external API calls
 
 ## Goals
 
-- Leverage paid subscriptions to Gemini and Claude for optimal performance
-- Create seamless handoffs between agents based on task requirements
+- Leverage local AI models for complete data privacy and control
+- Create seamless handoffs between agents based on task requirements  
 - Build a framework that can tackle complex, multi-faceted projects
-- Provide clear separation of concerns between strategic and tactical work
+- Provide extensible architecture for adding new AI providers
+- Eliminate external dependencies and usage-based costs
 
 ## Architecture
 
-The framework will coordinate agents to work together on projects, with each agent type handling tasks that align with their strengths:
+The framework coordinates local AI agents to work together on projects:
 
 - **Personal Assistant Layer**: Primary interface for all communications and routing
-- **Strategic Layer (Gemini)**: Project planning, requirement analysis, system design
-- **Execution Layer (Claude)**: Implementation, testing, debugging, tooling
+- **Strategic Layer (Local Models)**: Project planning, requirement analysis, system design
+- **Execution Layer (Local Models)**: Implementation, testing, debugging, tooling
+- **Unified Provider System**: Abstract interface supporting multiple AI backends
 
 ## User Interface
 
@@ -77,7 +80,7 @@ Personal settings are kept local and secure:
 
 ## Technology Stack
 
-### Recommended: Node.js/TypeScript Full Stack
+### Local-First AI Architecture
 
 **Core Framework:**
 - **Backend**: Node.js + TypeScript + Fastify
@@ -85,11 +88,11 @@ Personal settings are kept local and secure:
 - **Database**: PostgreSQL + Redis (caching/sessions)
 - **Queue System**: Bull/BullMQ for agent task processing
 
-**AI Integration:**
-- **Claude API**: @anthropic-ai/sdk for coding and execution tasks
-- **Gemini API**: @google-ai/generativelanguage for strategic planning
-- **Content Processing**: Sharp (images), FFmpeg (audio/video)
-- **Visual Generation**: Chart.js, D3.js for data visualization, DALL-E/Midjourney for concept illustrations
+**Local AI Integration:**
+- **Ollama**: Local LLM hosting and management
+- **Supported Models**: Qwen3:8b, DeepSeek-Coder, CodeLlama, Llama3.2
+- **Embeddings**: all-minilm, nomic-embed-text for semantic search
+- **Unified Provider System**: Abstract interface for future AI integrations
 
 **Communication Services:**
 - **SMS/MMS/Voice**: Twilio SDK
@@ -97,20 +100,75 @@ Personal settings are kept local and secure:
 - **Email Notifications**: SendGrid
 - **Real-time Updates**: WebSockets for agent coordination
 
+**Content Processing:**
+- **Images**: Sharp for image processing
+- **Audio/Video**: FFmpeg for multimedia content
+- **Visual Generation**: Chart.js, D3.js for data visualization
+
 **Development & Deployment:**
-- **Containerization**: Docker
-- **Hosting**: Railway/Vercel for rapid deployment
-- **Monitoring**: Real-time dashboard with agent status
+- **Containerization**: Docker with Ollama integration
+- **Self-Hosting**: Complete local deployment capability
+- **Monitoring**: Real-time dashboard with agent and model status
 - **Security**: JWT authentication, encrypted private configs
 
-### Why This Stack?
+### Why Local-First?
 
-1. **AI-First Development**: Excellent SDK support for Claude and Gemini APIs
-2. **Communication Excellence**: Twilio's Node.js SDK is mature and feature-complete  
-3. **Rapid Iteration**: TypeScript provides safety while maintaining flexibility
-4. **Unified Codebase**: Same language reduces context switching between components
-5. **Executive Dashboard**: Next.js provides real-time capabilities for monitoring
-6. **Scalable Architecture**: Built for enterprise multi-agent coordination
+1. **Privacy**: All AI processing happens locally - no data leaves your infrastructure
+2. **Cost Control**: No usage-based pricing or API rate limits
+3. **Reliability**: No external API dependencies or network failures
+4. **Customization**: Full control over model selection and fine-tuning
+5. **Extensibility**: Easy to add new local or cloud providers via unified interface
+6. **Offline Capability**: Works without internet connectivity
+
+## AI Provider Architecture
+
+### Unified Provider System
+
+Claudate uses a unified AI provider interface that abstracts away specific AI implementations:
+
+```typescript
+// Easy to switch or add providers
+const provider = await AIProviderFactory.create('ollama', {
+  host: 'localhost',
+  port: 11434,
+  defaultModel: 'qwen3:8b'
+});
+
+// Consistent interface across all providers
+const response = await provider.generateText({
+  messages: [{ role: 'user', content: 'Hello world' }],
+  temperature: 0.7
+});
+```
+
+### Currently Supported
+
+- **OllamaProvider**: Local model hosting via Ollama
+  - Models: Qwen3:8b, DeepSeek-Coder, CodeLlama, Llama3.2
+  - Embeddings: all-minilm, nomic-embed-text
+  - Features: Text generation, embeddings, health monitoring
+
+### Future Extensibility
+
+The architecture supports easy addition of new providers:
+
+```typescript
+// Adding a new provider is simple
+class OpenAIProvider extends BaseAIProvider {
+  async generateText(request) { /* implementation */ }
+  async generateEmbedding(request) { /* implementation */ }
+}
+
+// Register and use
+AIProviderFactory.register('openai', OpenAIProvider);
+```
+
+### Provider Features
+
+- **Health Monitoring**: Automatic health checks and metrics
+- **Failover Support**: Automatic fallback between providers
+- **Consistent Interfaces**: Same API regardless of underlying provider
+- **Configuration Management**: Centralized provider configuration
 
 ## Knowledge Architecture
 
@@ -167,12 +225,12 @@ Claudate uses a sophisticated knowledge architecture to provide agents with doma
 - Visual briefing templates and chart preferences
 - Executive dashboard layouts and KPI visualizations
 
-**Gemini Strategic Agents:**
+**Local Strategic Agents:**
 - Industry knowledge and market trends
 - Architectural patterns and design principles
 - Project management methodologies
 
-**Claude Execution Agents:**
+**Local Execution Agents:**
 - Code repositories and documentation
 - API references and examples
 - Testing frameworks and debugging patterns
