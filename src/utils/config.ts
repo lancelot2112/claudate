@@ -37,6 +37,20 @@ export interface AIConfig {
       embedding: string[];
     };
   };
+  pytorch: {
+    serviceUrl: string;
+    servicePort: number;
+    defaultModel: string;
+    defaultEmbeddingModel: string;
+    healthCheckInterval: number;
+    requestTimeout: number;
+    autoStart: boolean;
+    availableModels: {
+      reasoning: string[];
+      coding: string[];
+      embedding: string[];
+    };
+  };
 }
 
 export interface CommunicationConfig {
@@ -173,6 +187,20 @@ export const config: AppConfig = {
         reasoning: ['qwen3:8b', 'llama3.2', 'mistral'],
         coding: ['qwen3:8b', 'deepseek-coder', 'codellama'],
         embedding: ['all-minilm', 'nomic-embed-text']
+      }
+    },
+    pytorch: {
+      serviceUrl: getEnvVar('PYTORCH_SERVICE_URL', 'http://localhost'),
+      servicePort: getEnvNumber('PYTORCH_SERVICE_PORT', 8001),
+      defaultModel: getEnvVar('PYTORCH_DEFAULT_MODEL', 'Qwen/Qwen2.5-Coder-7B-Instruct'),
+      defaultEmbeddingModel: getEnvVar('PYTORCH_EMBEDDING_MODEL', 'sentence-transformers/all-MiniLM-L6-v2'),
+      healthCheckInterval: getEnvNumber('PYTORCH_HEALTH_CHECK_INTERVAL', 30000),
+      requestTimeout: getEnvNumber('PYTORCH_REQUEST_TIMEOUT', 60000),
+      autoStart: process.env.PYTORCH_AUTO_START === 'true',
+      availableModels: {
+        reasoning: ['Qwen/Qwen2.5-Coder-7B-Instruct', 'microsoft/DialoGPT-medium'],
+        coding: ['Qwen/Qwen2.5-Coder-7B-Instruct', 'microsoft/CodeBERT-base'],
+        embedding: ['sentence-transformers/all-MiniLM-L6-v2', 'BAAI/bge-large-en-v1.5']
       }
     },
   },

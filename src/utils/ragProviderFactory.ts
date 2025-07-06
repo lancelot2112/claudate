@@ -7,6 +7,8 @@
 
 import { AIProvider, AIProviderFactory } from '../integrations/ai/AIProvider';
 import { OllamaProvider, OllamaProviderConfig } from '../integrations/ai/OllamaProvider';
+import { PyTorchProvider, PyTorchProviderConfig } from '../integrations/ai/PyTorchProvider';
+import { config } from './config';
 import logger from './logger';
 
 export interface RAGProvider {
@@ -17,12 +19,23 @@ export interface RAGProvider {
 }
 
 export interface ProviderOptions {
+  // Ollama options
   ollamaHost?: string;
   ollamaPort?: number;
   defaultModel?: string;
   embeddingModel?: string;
   maxContextLength?: number;
   timeout?: number;
+  
+  // PyTorch options
+  pytorchServiceUrl?: string;
+  pytorchServicePort?: number;
+  pytorchDefaultModel?: string;
+  pytorchEmbeddingModel?: string;
+  
+  // Provider selection
+  preferredProvider?: 'ollama' | 'pytorch' | 'auto';
+  enableFallback?: boolean;
 }
 
 export class RAGProviderFactory {
@@ -31,6 +44,7 @@ export class RAGProviderFactory {
   static {
     // Register available provider types
     RAGProviderFactory.aiProviderFactory.register('ollama', OllamaProvider);
+    RAGProviderFactory.aiProviderFactory.register('pytorch', PyTorchProvider);
   }
   
   /**
@@ -38,61 +52,98 @@ export class RAGProviderFactory {
    */
   public static async createProviders(options: ProviderOptions = {}): Promise<RAGProvider[]> {
     const {
-      ollamaHost = 'localhost',
-      ollamaPort = 11434,
-      defaultModel = 'qwen3:8b',
-      embeddingModel = 'all-minilm',
+      // Ollama options
+      ollamaHost = config.ai.ollama.host,
+      ollamaPort = config.ai.ollama.port,
+      defaultModel = config.ai.ollama.defaultModel,
+      embeddingModel = config.ai.ollama.embeddingModel,
       maxContextLength = 100000,
-      timeout = 120000
+      timeout = config.ai.ollama.timeout,
+      
+      // PyTorch options
+      pytorchServiceUrl = config.ai.pytorch.serviceUrl,
+      pytorchServicePort = config.ai.pytorch.servicePort,
+      pytorchDefaultModel = config.ai.pytorch.defaultModel,
+      pytorchEmbeddingModel = config.ai.pytorch.defaultEmbeddingModel,
+      
+      // Provider selection
+      preferredProvider = 'auto',
+      enableFallback = true
     } = options;
 
     const providers: RAGProvider[] = [];
+    let priority = 1;
 
     logger.info('Creating unified RAG providers', {
+      preferredProvider,
+      enableFallback,
       ollamaHost,
       ollamaPort,
-      defaultModel,
-      embeddingModel
+      pytorchServiceUrl,
+      pytorchServicePort
     });
 
-    try {
-      // Create Ollama provider using unified interface
-      const ollamaConfig: OllamaProviderConfig = {
-        name: 'ollama',
-        host: ollamaHost,
-        port: ollamaPort,
-        timeout,
-        maxRetries: 3,
-        defaultModel,
-        embeddingModel,
-        models: {
-          text: ['qwen3:8b', 'llama3.2', 'mistral', 'deepseek-coder', 'codellama'],
-          embedding: ['all-minilm', 'nomic-embed-text']
+    // Determine which providers to try and in what order
+    const providersToTry = this.determineProviderOrder(preferredProvider);
+
+    for (const providerType of providersToTry) {
+      try {
+        if (providerType === 'ollama') {
+          const ollamaProvider = await this.createOllamaProvider({
+            host: ollamaHost,
+            port: ollamaPort,
+            defaultModel,
+            embeddingModel,
+            timeout
+          });
+
+          providers.push({
+            name: 'ollama',
+            client: ollamaProvider,
+            priority: priority++,
+            maxContextLength
+          });
+
+          logger.info('Ollama provider added successfully', { priority: priority - 1 });
+
+        } else if (providerType === 'pytorch') {
+          const pytorchProvider = await this.createPyTorchProvider({
+            serviceUrl: pytorchServiceUrl,
+            servicePort: pytorchServicePort,
+            defaultModel: pytorchDefaultModel,
+            defaultEmbeddingModel: pytorchEmbeddingModel
+          });
+
+          providers.push({
+            name: 'pytorch',
+            client: pytorchProvider,
+            priority: priority++,
+            maxContextLength
+          });
+
+          logger.info('PyTorch provider added successfully', { priority: priority - 1 });
         }
-      };
 
-      const ollamaProvider = await this.aiProviderFactory.create('ollama', ollamaConfig);
-      
-      providers.push({
-        name: 'ollama',
-        client: ollamaProvider,
-        priority: 1,
-        maxContextLength
-      });
-      
-      logger.info('Ollama provider added successfully');
+        // If we don't want fallback and we got our preferred provider, stop
+        if (!enableFallback && providers.length > 0) {
+          break;
+        }
 
-    } catch (error) {
-      logger.error('Failed to initialize Ollama provider', {
-        error: error instanceof Error ? error.message : String(error),
-        ollamaHost,
-        ollamaPort
-      });
-      throw new Error(`Ollama provider initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } catch (error) {
+        logger.warn(`Failed to initialize ${providerType} provider`, {
+          error: error instanceof Error ? error.message : String(error),
+          providerType
+        });
+
+        // If this was the preferred provider and no fallback, throw
+        if (!enableFallback && providerType === preferredProvider) {
+          throw error;
+        }
+      }
     }
 
     if (providers.length === 0) {
-      throw new Error('No AI providers available. Please ensure Ollama is running and accessible.');
+      throw new Error('No AI providers available. Please ensure at least one provider (Ollama or PyTorch service) is running and accessible.');
     }
 
     logger.info('RAG providers created', {
@@ -103,10 +154,71 @@ export class RAGProviderFactory {
     return providers;
   }
 
+  private static determineProviderOrder(preferred: string): string[] {
+    switch (preferred) {
+      case 'ollama':
+        return ['ollama', 'pytorch'];
+      case 'pytorch':
+        return ['pytorch', 'ollama'];
+      case 'auto':
+      default:
+        return ['ollama', 'pytorch']; // Ollama first by default (faster startup)
+    }
+  }
+
+  private static async createOllamaProvider(options: {
+    host: string;
+    port: number;
+    defaultModel: string;
+    embeddingModel: string;
+    timeout: number;
+  }): Promise<AIProvider> {
+    const ollamaConfig: OllamaProviderConfig = {
+      name: 'ollama',
+      host: options.host,
+      port: options.port,
+      timeout: options.timeout,
+      maxRetries: 3,
+      defaultModel: options.defaultModel,
+      embeddingModel: options.embeddingModel,
+      models: {
+        text: config.ai.ollama.availableModels.reasoning.concat(config.ai.ollama.availableModels.coding),
+        embedding: config.ai.ollama.availableModels.embedding
+      }
+    };
+
+    return await this.aiProviderFactory.create('ollama', ollamaConfig);
+  }
+
+  private static async createPyTorchProvider(options: {
+    serviceUrl: string;
+    servicePort: number;
+    defaultModel: string;
+    defaultEmbeddingModel: string;
+  }): Promise<AIProvider> {
+    const pytorchConfig: PyTorchProviderConfig = {
+      name: 'pytorch',
+      serviceUrl: options.serviceUrl,
+      servicePort: options.servicePort,
+      defaultModel: options.defaultModel,
+      defaultEmbeddingModel: options.defaultEmbeddingModel,
+      healthCheckInterval: config.ai.pytorch.healthCheckInterval,
+      requestTimeout: config.ai.pytorch.requestTimeout,
+      timeout: config.ai.pytorch.requestTimeout,
+      maxRetries: 3,
+      models: {
+        text: config.ai.pytorch.availableModels.reasoning.concat(config.ai.pytorch.availableModels.coding),
+        embedding: config.ai.pytorch.availableModels.embedding
+      }
+    };
+
+    return await this.aiProviderFactory.create('pytorch', pytorchConfig);
+  }
+
   /**
-   * Create Ollama provider with specific model
+   * Create Ollama provider with specific model (legacy method)
    */
-  public static async createOllamaProvider(options: {
+  public static async createSpecificOllamaProvider(options: {
     model: string;
     embeddingModel?: string;
     timeout?: number;

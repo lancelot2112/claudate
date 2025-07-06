@@ -1,0 +1,29 @@
+# Core ML libraries
+torch>=2.0.0
+transformers>=4.35.0
+sentence-transformers>=2.2.2
+tokenizers>=0.14.0
+
+# Web framework
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.0
+
+# Model management
+huggingface-hub>=0.17.0
+accelerate>=0.24.0
+safetensors>=0.4.0
+
+# Utilities
+numpy>=1.24.0
+requests>=2.31.0
+python-multipart>=0.0.6
+
+# Optional GPU support
+# torch-audio  # Uncomment if needed
+# torchaudio   # Uncomment if needed
+
+# Development
+pytest>=7.4.0
+black>=23.9.0
+isort>=5.12.0

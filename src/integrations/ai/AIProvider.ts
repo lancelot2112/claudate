@@ -64,6 +64,7 @@ export interface HealthStatus {
   latencyMs?: number;
   error?: string;
   timestamp: Date;
+  metadata?: Record<string, any>;
 }
 
 export interface ProviderMetrics {
