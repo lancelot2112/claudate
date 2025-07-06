@@ -135,13 +135,11 @@ describe('AgentCoordinator Integration Tests', () => {
     test('should submit and assign task to appropriate agent', async () => {
       const taskId = await coordinator.submitTask(
         ['coding', 'javascript'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Write a JavaScript function',
-          timestamp: new Date(),
-          metadata: {}
-        },
+          task: 'Write a JavaScript function'
+        }),
         'medium'
       );
 
@@ -187,13 +185,11 @@ describe('AgentCoordinator Integration Tests', () => {
     test('should handle no suitable agent scenario', async () => {
       const taskId = await coordinator.submitTask(
         ['unknown_capability'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Task requiring unknown capability',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Task requiring unknown capability'
+        })
       );
 
       // Wait for task processing attempt
@@ -219,13 +215,11 @@ describe('AgentCoordinator Integration Tests', () => {
 
       coordinator.submitTask(
         ['coding'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Test task',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Test task'
+        })
       );
     });
   });
@@ -240,13 +234,11 @@ describe('AgentCoordinator Integration Tests', () => {
     test('should select agent based on capability match', async () => {
       const taskId = await coordinator.submitTask(
         ['planning', 'strategic_analysis'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Create strategic plan',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Create strategic plan'
+        })
       );
 
       await new Promise(resolve => setTimeout(resolve, 1100));
@@ -261,13 +253,11 @@ describe('AgentCoordinator Integration Tests', () => {
       
       const taskId = await coordinator.submitTask(
         ['coding'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Write code',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Write code'
+        })
       );
 
       await new Promise(resolve => setTimeout(resolve, 1100));
@@ -299,13 +289,11 @@ describe('AgentCoordinator Integration Tests', () => {
         fromAgent: mockAgent1.id,
         reason: 'Need specialized capability',
         requiredCapabilities: ['planning'],
-        context: {
+        context: createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Create plan',
-          timestamp: new Date(),
-          metadata: {}
-        },
+          task: 'Create plan'
+        }),
         urgency: 'medium'
       });
     });
@@ -323,13 +311,11 @@ describe('AgentCoordinator Integration Tests', () => {
 
       const taskId = await coordinator.submitTask(
         ['coding'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Task that will fail',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Task that will fail'
+        })
       );
 
       await new Promise(resolve => setTimeout(resolve, 1100));
@@ -351,13 +337,11 @@ describe('AgentCoordinator Integration Tests', () => {
 
       const taskId = await coordinator.submitTask(
         ['coding'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Task with retry',
-          timestamp: new Date(),
-          metadata: {}
-        },
+          task: 'Task with retry'
+        }),
         'high' // High priority for retry
       );
 
@@ -390,13 +374,11 @@ describe('AgentCoordinator Integration Tests', () => {
       // Execute successful task
       const taskId = await coordinator.submitTask(
         ['coding'],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Performance test task',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Performance test task'
+        })
       );
 
       await new Promise(resolve => setTimeout(resolve, 1100));
@@ -410,13 +392,11 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should update success rate on failures', async () => {
       // First task succeeds
-      await coordinator.submitTask(['coding'], {
+      await coordinator.submitTask(['coding'], createMockAgentContext({
         userId: 'user1',
         sessionId: 'session1',
-        task: 'Success task',
-        timestamp: new Date(),
-        metadata: {}
-      });
+        task: 'Success task'
+      }));
 
       await new Promise(resolve => setTimeout(resolve, 1100));
 
@@ -428,13 +408,11 @@ describe('AgentCoordinator Integration Tests', () => {
         error: 'Task failed'
       });
 
-      await coordinator.submitTask(['coding'], {
+      await coordinator.submitTask(['coding'], createMockAgentContext({
         userId: 'user1',
         sessionId: 'session1',
-        task: 'Failure task',
-        timestamp: new Date(),
-        metadata: {}
-      });
+        task: 'Failure task'
+      }));
 
       await new Promise(resolve => setTimeout(resolve, 1100));
 
@@ -506,13 +484,11 @@ describe('AgentCoordinator Integration Tests', () => {
       
       const taskId = await coordinator.submitTask(
         [],
-        {
+        createMockAgentContext({
           userId: 'user1',
           sessionId: 'session1',
-          task: 'Task with no specific requirements',
-          timestamp: new Date(),
-          metadata: {}
-        }
+          task: 'Task with no specific requirements'
+        })
       );
 
       await new Promise(resolve => setTimeout(resolve, 1100));
