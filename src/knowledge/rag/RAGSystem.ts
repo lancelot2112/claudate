@@ -148,15 +148,18 @@ export class RAGSystem {
 
   public async askQuestion(
     question: string,
-    filters?: any[],
-    maxDocuments = 5
+    conversationHistory?: ContextMessage[],
+    options: { includeSource?: boolean; maxSources?: number; maxDocuments?: number } = {}
   ): Promise<RAGResponse> {
+    const { includeSource = true, maxSources = 5, maxDocuments = 5 } = options;
     const context: RAGContext = {
       query: question,
       retrievedDocuments: [],
+      conversationHistory: conversationHistory || [],
       sessionMetadata: {
         maxDocuments,
-        filters
+        includeSource,
+        maxSources
       }
     };
 
@@ -224,7 +227,7 @@ export class RAGSystem {
     }
 
     // Remove duplicates and combine with original query
-    const uniqueTerms = [...new Set(contextTerms)];
+    const uniqueTerms = Array.from(new Set(contextTerms));
     if (uniqueTerms.length > 0) {
       return `${query} ${uniqueTerms.join(' ')}`;
     }
@@ -423,6 +426,8 @@ Content: ${content}`;
       answer: aiResponse.answer,
       sources: documents,
       confidence: aiResponse.confidence,
+      success: true,
+      conversationId: context.sessionMetadata?.conversationId || `rag-${Date.now()}`,
       retrievalMetrics: {
         documentsRetrieved: documents.length,
         averageRelevanceScore: documents.length > 0 

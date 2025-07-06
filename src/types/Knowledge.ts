@@ -244,6 +244,7 @@ export interface ContextMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
+  confidence?: number;
   metadata?: Record<string, any>;
 }
 
@@ -251,6 +252,8 @@ export interface RAGResponse {
   answer: string;
   sources: SearchResult[];
   confidence: number;
+  success: boolean;
+  conversationId?: string;
   retrievalMetrics: {
     documentsRetrieved: number;
     averageRelevanceScore: number;

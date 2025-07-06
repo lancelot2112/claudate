@@ -251,9 +251,9 @@ export class GeminiCLIClient {
 
     // Remove trailing metadata (common in gcloud responses)
     const metadataPatterns = [
-      /\n---\n.*$/s,
-      /\nMetadata:.*$/s,
-      /\nFinish reason:.*$/s
+      /\n---\n[\s\S]*$/,
+      /\nMetadata:[\s\S]*$/,
+      /\nFinish reason:[\s\S]*$/
     ];
 
     for (const pattern of metadataPatterns) {

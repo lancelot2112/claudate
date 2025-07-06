@@ -521,6 +521,23 @@ export class SemanticSearchEngine {
   public getRelationalStore(): IRelationalStore | undefined {
     return this.relationalStore;
   }
+
+  public async initialize(): Promise<void> {
+    // Initialize the semantic search engine
+    logger.info('Initializing SemanticSearchEngine');
+    
+    // Initialize vector store if needed
+    if (this.vectorStore && typeof this.vectorStore.initialize === 'function') {
+      await this.vectorStore.initialize();
+    }
+    
+    // Initialize relational store if needed
+    if (this.relationalStore && typeof this.relationalStore.initialize === 'function') {
+      await this.relationalStore.initialize();
+    }
+    
+    logger.info('SemanticSearchEngine initialization complete');
+  }
 }
 
 export default SemanticSearchEngine;

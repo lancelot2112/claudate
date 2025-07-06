@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 

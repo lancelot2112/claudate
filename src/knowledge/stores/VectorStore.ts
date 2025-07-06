@@ -535,6 +535,25 @@ export class VectorStore implements IVectorStore {
       throw new VectorStoreError(`Failed to get stats: ${errorMessage}`);
     }
   }
+
+  public async cleanup(): Promise<void> {
+    try {
+      logger.info('Cleaning up VectorStore resources');
+      
+      // Reset collection reference
+      this.collection = null;
+      this.isInitialized = false;
+      
+      // Note: ChromaDB client doesn't need explicit cleanup in most cases
+      // but we reset the internal state
+      
+      logger.info('VectorStore cleanup completed');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Failed to cleanup VectorStore', { error: errorMessage });
+      throw new VectorStoreError(`Cleanup failed: ${errorMessage}`);
+    }
+  }
 }
 
 export default VectorStore;

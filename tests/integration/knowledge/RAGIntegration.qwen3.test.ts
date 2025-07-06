@@ -6,7 +6,6 @@ import { Qwen3RAGAdapter } from '../../../src/integrations/ai/Qwen3RAGAdapter';
 import { 
   Document, 
   DocumentType,
-  RAGContext,
   ContextMessage 
 } from '../../../src/types/Knowledge';
 
