@@ -14,8 +14,8 @@ import { GeminiCLIClient } from '../../integrations/ai/GeminiCLIClient';
 import logger from '../../utils/logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli';
-  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient;
+  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli' | 'qwen3';
+  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient | any;
   priority: number;
   maxContextLength: number;
 }
@@ -355,6 +355,19 @@ Content: ${content}`;
             systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
             temperature: 0.3,
             maxOutputTokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
+        } else if (provider.name === 'qwen3') {
+          // Handle Qwen3 provider via sendMessage method
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', content: contextText }],
+            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            max_tokens: 2000
           });
           
           return {
