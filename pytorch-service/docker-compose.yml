@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  pytorch-service:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTORCH_SERVICE_PORT=8001
+      - PYTORCH_MODEL_CACHE_DIR=/app/model_cache
+      - PYTORCH_MAX_MODELS=3
+      - PYTORCH_CUDA_DEVICE=0
+    volumes:
+      - pytorch_models:/app/model_cache
+      - ./logs:/app/logs
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Optional: Redis for caching (if needed for advanced model management)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  pytorch_models:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: claudate-pytorch
+    driver: bridge

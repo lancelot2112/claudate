@@ -44,8 +44,14 @@ ollama serve         # Start Ollama server
 ollama pull qwen3:8b # Pull required models
 ollama list          # List available models
 
-# Docker
-docker-compose up    # Start all services (includes Ollama)
+# PyTorch Service (Hugging Face Models)
+cd pytorch-service   # Navigate to service directory
+python app.py        # Start PyTorch service
+python test_service.py # Test service functionality
+
+# Docker Services
+docker-compose up    # Start all services (Node.js + databases)
+cd pytorch-service && docker-compose up # Start PyTorch service
 docker-compose down  # Stop all services
 ```
 

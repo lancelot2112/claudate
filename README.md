@@ -76,7 +76,8 @@ Personal settings are kept local and secure:
 1. Copy `config/private.example.json` to `config/private.json`
 2. Add your phone number, notification preferences, and API credentials
 3. Configure agent priorities and update frequency
-4. The framework handles the rest automatically
+4. Set up PyTorch service: `cd pytorch-service && cp .env.example .env`
+5. The framework handles the rest automatically
 
 ## Technology Stack
 
@@ -89,10 +90,11 @@ Personal settings are kept local and secure:
 - **Queue System**: Bull/BullMQ for agent task processing
 
 **Local AI Integration:**
-- **Ollama**: Local LLM hosting and management
-- **Supported Models**: Qwen3:8b, DeepSeek-Coder, CodeLlama, Llama3.2
-- **Embeddings**: all-minilm, nomic-embed-text for semantic search
-- **Unified Provider System**: Abstract interface for future AI integrations
+- **Ollama**: Local LLM hosting and management (GGML optimized)
+- **PyTorch Service**: Direct Hugging Face model access via Python microservice
+- **Supported Models**: Qwen3:8b, Qwen2.5-Coder, DeepSeek-Coder, CodeLlama, Llama3.2, DialoGPT, CodeBERT
+- **Embeddings**: all-minilm, sentence-transformers, BGE, nomic-embed-text, custom HF models
+- **Unified Provider System**: Abstract interface supporting multiple AI backends
 
 **Communication Services:**
 - **SMS/MMS/Voice**: Twilio SDK
@@ -106,10 +108,11 @@ Personal settings are kept local and secure:
 - **Visual Generation**: Chart.js, D3.js for data visualization
 
 **Development & Deployment:**
-- **Containerization**: Docker with Ollama integration
+- **Containerization**: Docker with Ollama and PyTorch service integration
 - **Self-Hosting**: Complete local deployment capability
 - **Monitoring**: Real-time dashboard with agent and model status
 - **Security**: JWT authentication, encrypted private configs
+- **Microservices**: Python FastAPI service for PyTorch models
 
 ### Why Local-First?
 
@@ -147,6 +150,12 @@ const response = await provider.generateText({
   - Models: Qwen3:8b, DeepSeek-Coder, CodeLlama, Llama3.2
   - Embeddings: all-minilm, nomic-embed-text
   - Features: Text generation, embeddings, health monitoring
+
+- **PyTorchProvider**: Direct Hugging Face model access via Python service
+  - Models: Any HF model (Qwen2.5-Coder, DialoGPT, CodeBERT, etc.)
+  - Embeddings: sentence-transformers, BGE, custom models
+  - Features: Advanced model management, GPU acceleration, model caching
+  - Architecture: FastAPI microservice with HTTP communication
 
 ### Future Extensibility
 
@@ -519,7 +528,7 @@ claudate/
 │   │   │   ├── personal-assistant/ # Primary communication interface
 │   │   │   ├── gemini/            # Strategic planning agents  
 │   │   │   ├── claude/            # Execution & coding agents
-│   │   │   └── ollama/            # Local AI agents (Qwen3)
+│   │   │   └── ollama/            # Local AI agents (Qwen3, PyTorch)
 │   │   │
 │   │   ├── communication/         # Multi-channel communication
 │   │   │   ├── channels/          # SMS, MMS, Google Chat
@@ -536,7 +545,7 @@ claudate/
 │   │   │   └── coordination/      # Cross-store coordination
 │   │   │
 │   │   ├── integrations/          # External service integrations
-│   │   │   ├── ai/                # Claude, Gemini, Ollama clients
+│   │   │   ├── ai/                # Ollama, PyTorch provider clients
 │   │   │   ├── communication/     # Twilio, Google services
 │   │   │   └── storage/           # Database connectors
 │   │   │
@@ -570,6 +579,13 @@ claudate/
 │       └── rag-with-cli.ts        # CLI integration examples
 │
 ├── 🔧 Infrastructure & Tools
+│   ├── pytorch-service/           # Python PyTorch microservice
+│   │   ├── app.py                 # FastAPI application
+│   │   ├── model_manager.py       # Model management system
+│   │   ├── requirements.txt       # Python dependencies
+│   │   ├── Dockerfile            # Container configuration
+│   │   └── docker-compose.yml    # Service orchestration
+│   │
 │   ├── scripts/                   # Setup & deployment scripts
 │   │   ├── setup-dev-db.sh        # Development database setup
 │   │   ├── setup-test-db.js       # Test database configuration
