@@ -1,7 +1,8 @@
-import { AgentCoordinator } from '../../../src/agents/coordination/AgentCoordinator.js';
-import { BaseAgent } from '../../../src/agents/base/Agent.js';
-import { AgentContext, AgentResult, AgentConfig } from '../../../src/types/Agent.js';
+import { AgentCoordinator } from '../../../src/agents/coordination/AgentCoordinator';
+import { BaseAgent } from '../../../src/agents/base/Agent';
+import { AgentContext, AgentResult, AgentConfig } from '../../../src/types/Agent';
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { createMockAgentContext } from '../../helpers/contextHelpers';
 
 // Mock agent for testing
 class MockAgent extends BaseAgent {
@@ -13,7 +14,7 @@ class MockAgent extends BaseAgent {
   }
 
   public async executeTask(context: AgentContext): Promise<AgentResult> {
-    return this.mockExecuteTask(context);
+    return this.mockExecuteTask(context) as AgentResult;
   }
 
   public async getCapabilities(): Promise<string[]> {
@@ -34,38 +35,50 @@ describe('AgentCoordinator Integration Tests', () => {
     mockAgent1 = new MockAgent({
       name: 'MockAgent1',
       type: 'execution',
-      capabilities: ['coding', 'javascript', 'testing']
+      capabilities: ['coding', 'javascript', 'testing'],
+      enabled: true,
+      priority: 1,
+      maxConcurrentTasks: 5
     });
 
     mockAgent2 = new MockAgent({
       name: 'MockAgent2',
       type: 'strategic',
-      capabilities: ['planning', 'architecture', 'strategic_analysis']
+      capabilities: ['planning', 'architecture', 'strategic_analysis'],
+      enabled: true,
+      priority: 2,
+      maxConcurrentTasks: 3
     });
 
     mockAgent3 = new MockAgent({
       name: 'MockAgent3',
       type: 'execution',
-      capabilities: ['tool_execution', 'deployment', 'npm']
+      capabilities: ['tool_execution', 'deployment', 'npm'],
+      enabled: true,
+      priority: 3,
+      maxConcurrentTasks: 2
     });
 
     // Setup default successful responses
     mockAgent1.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent1.id,
-      timestamp: new Date()
+      timestamp: Date.now(),
+      metadata: {}
     });
 
     mockAgent2.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent2.id,
-      timestamp: new Date()
+      timestamp: Date.now(),
+      metadata: {}
     });
 
     mockAgent3.mockExecuteTask.mockResolvedValue({
       success: true,
       agentId: mockAgent3.id,
-      timestamp: new Date()
+      timestamp: Date.now(),
+      metadata: {}
     });
   });
 
@@ -146,9 +159,21 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should prioritize tasks correctly', async () => {
       const taskIds = await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Low priority task', timestamp: new Date(), metadata: {} }, 'low'),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Critical task', timestamp: new Date(), metadata: {} }, 'critical'),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Medium priority task', timestamp: new Date(), metadata: {} }, 'medium')
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Low priority task' 
+        }), 'low'),
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Critical task' 
+        }), 'critical'),
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Medium priority task' 
+        }), 'medium')
       ]);
 
       // Wait for task processing
@@ -429,9 +454,21 @@ describe('AgentCoordinator Integration Tests', () => {
     test('should provide queue status', async () => {
       // Submit multiple tasks
       await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: new Date(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: new Date(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 3', timestamp: new Date(), metadata: {} })
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Task 1' 
+        })),
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Task 2' 
+        })),
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Task 3' 
+        }))
       ]);
 
       const queueStatus = coordinator.getQueueStatus();
@@ -440,8 +477,16 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should provide all active tasks', async () => {
       const taskIds = await Promise.all([
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 1', timestamp: new Date(), metadata: {} }),
-        coordinator.submitTask(['coding'], { userId: 'user1', sessionId: 'session1', task: 'Task 2', timestamp: new Date(), metadata: {} })
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Task 1' 
+        })),
+        coordinator.submitTask(['coding'], createMockAgentContext({ 
+          userId: 'user1', 
+          sessionId: 'session1', 
+          task: 'Task 2' 
+        }))
       ]);
 
       const activeTasks = coordinator.getAllActiveTasks();

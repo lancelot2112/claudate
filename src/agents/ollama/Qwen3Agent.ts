@@ -1,7 +1,7 @@
-import { BaseAgent } from '../base/Agent.js';
-import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent.js';
-import { OllamaClient } from '../../integrations/ai/OllamaClient.js';
-import logger from '../../utils/logger.js';
+import { BaseAgent } from '../base/Agent';
+import { AgentContext, AgentResult, AgentConfig } from '../../types/Agent';
+import { OllamaClient } from '../../integrations/ai/OllamaClient';
+import logger from '../../utils/logger';
 
 export interface Qwen3Task {
   type: 'reasoning' | 'analysis' | 'generation' | 'coding' | 'translation' | 'summarization';

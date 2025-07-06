@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
-import { ContextManager } from '../../../src/knowledge/context/ContextManager.js';
-import { ContextCompressor } from '../../../src/knowledge/context/ContextCompressor.js';
-import { ContextEntry, ContextMessage } from '../../../src/types/Knowledge.js';
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient.js';
+import { ContextManager } from '../../../src/knowledge/context/ContextManager';
+import { ContextCompressor } from '../../../src/knowledge/context/ContextCompressor';
+import { ContextEntry, ContextMessage } from '../../../src/types/Knowledge';
+import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
 
 describe('Context Management Integration', () => {
   let contextManager: ContextManager;

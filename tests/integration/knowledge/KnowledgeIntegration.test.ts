@@ -1,19 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
-import { VectorStore } from '../../../src/knowledge/stores/VectorStore.js';
-import { RelationalStore } from '../../../src/knowledge/stores/RelationalStore.js';
-import { GraphStore } from '../../../src/knowledge/stores/GraphStore.js';
-import { IngestionPipeline } from '../../../src/knowledge/ingestion/IngestionPipeline.js';
-import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSearch.js';
-import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem.js';
-import { ContextManager } from '../../../src/knowledge/context/ContextManager.js';
-import { ContextCompressor } from '../../../src/knowledge/context/ContextCompressor.js';
-import { KnowledgeCoordinator, CrossStoreQuery } from '../../../src/knowledge/coordination/KnowledgeCoordinator.js';
+import { VectorStore } from '../../../src/knowledge/stores/VectorStore';
+import { RelationalStore } from '../../../src/knowledge/stores/RelationalStore';
+import { GraphStore } from '../../../src/knowledge/stores/GraphStore';
+import { IngestionPipeline } from '../../../src/knowledge/ingestion/IngestionPipeline';
+import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSearch';
+import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem';
+import { ContextManager } from '../../../src/knowledge/context/ContextManager';
+import { ContextCompressor } from '../../../src/knowledge/context/ContextCompressor';
+import { KnowledgeCoordinator, CrossStoreQuery } from '../../../src/knowledge/coordination/KnowledgeCoordinator';
 import { 
   Document, 
   DocumentType,
   KnowledgeQuery
-} from '../../../src/types/Knowledge.js';
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient.js';
+} from '../../../src/types/Knowledge';
+import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
 
 describe('Knowledge Management Integration', () => {
   let vectorStore: VectorStore;
