@@ -48,6 +48,13 @@ coverage/
 junit.xml
 test-results/
 
+# Development test scripts (prevent accumulation in root)
+test-*.js
+debug-*.js
+temp-*.js
+scratch-*.js
+experiment-*.js
+
 # Logs and debug files
 *.log
 logs/
