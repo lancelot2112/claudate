@@ -222,7 +222,7 @@ export class KnowledgeCoordinator {
 
       // Enhance with RAG if requested
       if (options.useRAG && this.ragSystem) {
-        const ragResponse = await this.ragSystem.askQuestion(query, [], options.maxResults || 5);
+        const ragResponse = await this.ragSystem.askQuestion(query, [], { maxDocuments: options.maxResults || 5 });
         result = await this.enhanceWithRAG(result, ragResponse);
       }
 

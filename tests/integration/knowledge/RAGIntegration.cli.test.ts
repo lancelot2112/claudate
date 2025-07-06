@@ -302,7 +302,7 @@ CLI integrations can automatically detect available tools, configure authenticat
       const response = await ragSystem.askQuestion(
         'What is artificial intelligence?',
         [],
-        3
+        { maxDocuments: 3 }
       );
 
       expect(response.answer).toBeDefined();
@@ -325,7 +325,7 @@ CLI integrations can automatically detect available tools, configure authenticat
       const response = await ragSystem.askQuestion(
         'What are the main types of machine learning algorithms?',
         [],
-        5
+        { maxDocuments: 5 }
       );
 
       expect(response.sources.length).toBeGreaterThan(0);
@@ -346,7 +346,7 @@ CLI integrations can automatically detect available tools, configure authenticat
       const response = await ragSystem.askQuestion(
         'What are the benefits of CLI integration for AI systems?',
         [],
-        3
+        { maxDocuments: 3 }
       );
 
       expect(response.answer).toBeDefined();
@@ -410,7 +410,7 @@ CLI integrations can automatically detect available tools, configure authenticat
       const response = await ragSystem.askQuestion(
         'Explain the difference between supervised and unsupervised learning',
         [],
-        3
+        { maxDocuments: 3 }
       );
       
       const responseTime = Date.now() - startTime;
@@ -427,7 +427,7 @@ CLI integrations can automatically detect available tools, configure authenticat
     it('should handle edge cases gracefully', async () => {
       // Test with empty query (should handle gracefully)
       try {
-        const response = await ragSystem.askQuestion('', [], 1);
+        const response = await ragSystem.askQuestion('', [], { maxDocuments: 1 });
         // Should either work or fail gracefully
         if (response) {
           expect(response.answer).toBeDefined();
@@ -438,7 +438,7 @@ CLI integrations can automatically detect available tools, configure authenticat
       }
 
       // Test with very short query
-      const shortResponse = await ragSystem.askQuestion('AI?', [], 2);
+      const shortResponse = await ragSystem.askQuestion('AI?', [], { maxDocuments: 2 });
       expect(shortResponse.answer).toBeDefined();
       expect(shortResponse.sources.length).toBeGreaterThanOrEqual(0);
 

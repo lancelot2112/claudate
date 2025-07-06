@@ -36,7 +36,7 @@ export class ClaudeCLIClient {
     this.config = {
       timeout: 60000, // 60 seconds for CLI operations
       maxRetries: 2,
-      model: 'claude-3-sonnet-20240229', // Default model
+      model: 'sonnet', // Default model (Claude CLI alias for latest)
       ...customConfig
     };
 
@@ -95,44 +95,27 @@ export class ClaudeCLIClient {
   }
 
   private formatPromptForCLI(request: ClaudeCLIRequest): string {
-    let prompt = '';
-
-    // Add system message if provided
-    if (request.system) {
-      prompt += `System: ${request.system}\n\n`;
+    // For Claude CLI, we only need the user's message content
+    // The CLI handles system instructions and conversation formatting internally
+    
+    // Find the user message (should be the main content)
+    const userMessage = request.messages.find(msg => msg.role === 'user');
+    if (userMessage) {
+      return userMessage.content;
     }
-
-    // Add conversation history
-    for (const message of request.messages) {
-      if (message.role === 'system') {
-        prompt += `System: ${message.content}\n\n`;
-      } else if (message.role === 'user') {
-        prompt += `Human: ${message.content}\n\n`;
-      } else if (message.role === 'assistant') {
-        prompt += `Assistant: ${message.content}\n\n`;
-      }
-    }
-
-    // Ensure we end with a user message for CLI
-    if (!prompt.trim().endsWith('Human:')) {
-      prompt += 'Please provide a comprehensive response based on the above context.\n\n';
-    }
-
-    return prompt.trim();
+    
+    // Fallback: combine all messages as simple text
+    return request.messages.map(msg => msg.content).join('\n\n');
   }
 
   private async executeCLICommand(prompt: string, request: ClaudeCLIRequest): Promise<{ content: string }> {
     return new Promise((resolve, reject) => {
-      // Prepare CLI arguments
-      const args = ['--no-input-wrap'];
+      // Prepare CLI arguments for Claude CLI
+      const args = ['--print', '--output-format', 'json'];
       
-      // Add model if specified
-      if (request.max_tokens) {
-        args.push('--max-tokens', request.max_tokens.toString());
-      }
-
-      if (request.temperature) {
-        args.push('--temperature', request.temperature.toString());
+      // Add model if specified (Claude CLI format)
+      if (this.config.model) {
+        args.push('--model', this.config.model);
       }
 
       logger.debug('Executing Claude CLI command', { args });
@@ -163,6 +146,12 @@ export class ClaudeCLIClient {
           resolve({ content });
         } else {
           const error = stderr || `Claude CLI exited with code ${code}`;
+          logger.error('Claude CLI process failed', { 
+            code, 
+            stderr, 
+            stdout: stdout.substring(0, 500),
+            prompt: prompt.substring(0, 200) 
+          });
           reject(new Error(error));
         }
       });
@@ -188,21 +177,41 @@ export class ClaudeCLIClient {
   }
 
   private cleanCLIResponse(rawResponse: string): string {
-    // Remove any CLI-specific formatting or metadata
-    let cleaned = rawResponse.trim();
-    
-    // Remove common CLI prefixes if present
-    const prefixesToRemove = [
-      /^Assistant:\s*/,
-      /^Claude:\s*/,
-      /^Response:\s*/
-    ];
+    try {
+      // Parse JSON response from Claude CLI
+      const jsonResponse = JSON.parse(rawResponse.trim());
+      
+      // Extract the result from the JSON response
+      if (jsonResponse.result) {
+        return jsonResponse.result;
+      } else if (jsonResponse.content) {
+        return jsonResponse.content;
+      } else {
+        // Fallback to raw response if JSON structure is unexpected
+        return rawResponse.trim();
+      }
+    } catch (error) {
+      logger.warn('Failed to parse Claude CLI JSON response, using raw text', { 
+        error: error instanceof Error ? error.message : String(error),
+        rawResponse: rawResponse.substring(0, 200) 
+      });
+      
+      // Fallback to text processing if JSON parsing fails
+      let cleaned = rawResponse.trim();
+      
+      // Remove common CLI prefixes if present
+      const prefixesToRemove = [
+        /^Assistant:\s*/,
+        /^Claude:\s*/,
+        /^Response:\s*/
+      ];
 
-    for (const prefix of prefixesToRemove) {
-      cleaned = cleaned.replace(prefix, '');
+      for (const prefix of prefixesToRemove) {
+        cleaned = cleaned.replace(prefix, '');
+      }
+
+      return cleaned.trim();
     }
-
-    return cleaned.trim();
   }
 
   private updateCostTracker(inputTokens: number, outputTokens: number): void {
