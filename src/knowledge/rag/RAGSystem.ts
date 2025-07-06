@@ -5,15 +5,18 @@ import {
   ContextMessage,
   SearchResult,
   KnowledgeQuery
-} from '../../types/Knowledge.js';
-import { SemanticSearchEngine } from '../search/SemanticSearch.js';
-import { AnthropicClient } from '../../integrations/ai/AnthropicClient.js';
-import { GeminiClient } from '../../integrations/ai/GeminiClient.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { SemanticSearchEngine } from '../search/SemanticSearch';
+import { AnthropicClient } from '../../integrations/ai/AnthropicClient';
+import { GeminiClient } from '../../integrations/ai/GeminiClient';
+import { ClaudeCLIClient } from '../../integrations/ai/ClaudeCLIClient';
+import { GeminiCLIClient } from '../../integrations/ai/GeminiCLIClient';
+import { Qwen3RAGAdapter } from '../../integrations/ai/Qwen3RAGAdapter';
+import logger from '../../utils/logger';
 
 export interface RAGProvider {
-  name: 'claude' | 'gemini';
-  client: AnthropicClient | GeminiClient;
+  name: 'claude' | 'gemini' | 'claude-cli' | 'gemini-cli' | 'qwen3';
+  client: AnthropicClient | GeminiClient | ClaudeCLIClient | GeminiCLIClient | Qwen3RAGAdapter;
   priority: number;
   maxContextLength: number;
 }
@@ -323,12 +326,48 @@ Content: ${content}`;
             answer: response.content,
             confidence: this.calculateConfidence(response.content, contextText)
           };
+        } else if (provider.name === 'claude-cli' && provider.client instanceof ClaudeCLIClient) {
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', content: contextText }],
+            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            max_tokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
+        } else if (provider.name === 'gemini-cli' && provider.client instanceof GeminiCLIClient) {
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', parts: [{ text: contextText }] }],
+            systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            maxOutputTokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
         } else if (provider.name === 'gemini' && provider.client instanceof GeminiClient) {
           const response = await provider.client.sendMessage({
             messages: [{ role: 'user', parts: [{ text: contextText }] }],
             systemInstruction: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
             temperature: 0.3,
             maxOutputTokens: 2000
+          });
+          
+          return {
+            answer: response.content,
+            confidence: this.calculateConfidence(response.content, contextText)
+          };
+        } else if (provider.name === 'qwen3' && provider.client instanceof Qwen3RAGAdapter) {
+          const response = await provider.client.sendMessage({
+            messages: [{ role: 'user', content: contextText }],
+            system: 'You are a helpful AI assistant that provides accurate, comprehensive answers based on the provided context. Always cite your sources and indicate confidence levels.',
+            temperature: 0.3,
+            max_tokens: 2000
           });
           
           return {
@@ -475,6 +514,15 @@ Content: ${content}`;
   public updateConfig(newConfig: Partial<RAGConfig>): void {
     this.config = { ...this.config, ...newConfig };
     logger.info('RAG configuration updated', { newConfig });
+  }
+
+  public setSearchEngine(searchEngine: SemanticSearchEngine): void {
+    this.searchEngine = searchEngine;
+    logger.info('RAG search engine updated');
+  }
+
+  public getSearchEngine(): SemanticSearchEngine {
+    return this.searchEngine;
   }
 }
 

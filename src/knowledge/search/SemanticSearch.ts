@@ -6,8 +6,8 @@ import {
   IRelationalStore,
   QueryFilter,
   VectorSearchOptions
-} from '../../types/Knowledge.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import logger from '../../utils/logger';
 
 export interface SearchStrategy {
   name: 'semantic' | 'keyword' | 'hybrid';
@@ -27,6 +27,49 @@ export interface EmbeddingProvider {
   generateEmbedding(text: string): Promise<number[]>;
   getDimensions(): number;
   getModel(): string;
+}
+
+export class MockEmbeddingProvider implements EmbeddingProvider {
+  private dimensions: number;
+  private model: string;
+
+  constructor(dimensions = 384) {
+    this.dimensions = dimensions;
+    this.model = 'mock-embedding-provider';
+  }
+
+  async generateEmbedding(text: string): Promise<number[]> {
+    // Generate deterministic mock embeddings based on text hash
+    const hash = this.hashString(text);
+    const embedding = new Array(this.dimensions);
+    
+    for (let i = 0; i < this.dimensions; i++) {
+      // Use hash and position to generate deterministic values
+      embedding[i] = Math.sin((hash + i) * 0.01) * 0.5;
+    }
+    
+    // Normalize the embedding
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    return embedding.map(val => val / magnitude);
+  }
+
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  getDimensions(): number {
+    return this.dimensions;
+  }
+
+  getModel(): string {
+    return this.model;
+  }
 }
 
 export class OpenAIEmbeddingProvider implements EmbeddingProvider {
@@ -459,6 +502,24 @@ export class SemanticSearchEngine {
         averageSearchTime: 0
       };
     }
+  }
+
+  public setVectorStore(vectorStore: IVectorStore): void {
+    this.vectorStore = vectorStore;
+    logger.info('Vector store updated in SemanticSearchEngine');
+  }
+
+  public getVectorStore(): IVectorStore {
+    return this.vectorStore;
+  }
+
+  public setRelationalStore(relationalStore: IRelationalStore): void {
+    this.relationalStore = relationalStore;
+    logger.info('Relational store updated in SemanticSearchEngine');
+  }
+
+  public getRelationalStore(): IRelationalStore | undefined {
+    return this.relationalStore;
   }
 }
 

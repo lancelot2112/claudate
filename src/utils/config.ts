@@ -34,6 +34,19 @@ export interface AIConfig {
   openai?: {
     apiKey: string;
   };
+  ollama?: {
+    host: string;
+    port: number;
+    defaultModel: string;
+    embeddingModel: string;
+    timeout: number;
+    maxRetries: number;
+    availableModels: {
+      reasoning: string[];
+      coding: string[];
+      embedding: string[];
+    };
+  };
 }
 
 export interface CommunicationConfig {
@@ -169,6 +182,19 @@ export const config: AppConfig = {
     openai: process.env.OPENAI_API_KEY ? {
       apiKey: getEnvVar('OPENAI_API_KEY'),
     } : undefined,
+    ollama: {
+      host: getEnvVar('OLLAMA_HOST', 'localhost'),
+      port: getEnvNumber('OLLAMA_PORT', 11434),
+      defaultModel: getEnvVar('OLLAMA_DEFAULT_MODEL', 'qwen3:8b'),
+      embeddingModel: getEnvVar('OLLAMA_EMBEDDING_MODEL', 'all-minilm'),
+      timeout: getEnvNumber('OLLAMA_TIMEOUT', 120000), // Increased for larger models
+      maxRetries: getEnvNumber('OLLAMA_MAX_RETRIES', 3),
+      availableModels: {
+        reasoning: ['qwen3:8b', 'llama3.2', 'mistral'],
+        coding: ['qwen3:8b', 'deepseek-coder', 'codellama'],
+        embedding: ['all-minilm', 'nomic-embed-text']
+      }
+    },
   },
 
   communication: {
