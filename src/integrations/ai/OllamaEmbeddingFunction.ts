@@ -9,7 +9,7 @@ export class OllamaEmbeddingFunction implements EmbeddingFunction {
   private ollamaClient: OllamaClient;
   private model: string;
 
-  constructor(model: string = 'qwen2.5', ollamaConfig?: any) {
+  constructor(model: string = 'mxbai-embed-large:latest', ollamaConfig?: any) {
     this.model = model;
     this.ollamaClient = new OllamaClient(ollamaConfig);
     
