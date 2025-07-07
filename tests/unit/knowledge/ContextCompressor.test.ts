@@ -257,7 +257,7 @@ describe('ContextCompressor', () => {
           sampleLongText,
           style,
           expect.any(Number),
-          false,
+          undefined,
           undefined
         );
       }
