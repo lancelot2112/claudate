@@ -11,6 +11,39 @@ Claudate is an agentic team framework that orchestrates specialized AI agents fo
 - **Execution Layer (Local AI)**: Implementation, testing, debugging, and tool execution using local models
 - **Unified Provider System**: Abstract interface supporting multiple AI backends (currently Ollama)
 
+## Ollama Agent Architecture
+
+The system now uses a **generic OllamaAgent** architecture instead of model-specific agents:
+
+### Key Components
+- **OllamaAgent**: Generic agent class that can work with any Ollama model
+- **OllamaRAGAdapter**: Unified RAG interface adapter for knowledge systems
+- **Factory Methods**: Convenient creation methods for common model configurations
+
+### Model Support
+- **Qwen Models**: `qwen3:8b`, `qwen2.5-coder:7b`
+- **Llama Models**: `llama3.2:3b`, `llama3.2:1b`
+- **Code Models**: Any code-focused Ollama model
+- **Custom Models**: Any model available through Ollama
+
+### Usage Examples
+```typescript
+// Create a generic agent with any model
+const agent = new OllamaAgent({
+  modelName: 'qwen3:8b',
+  name: 'my-agent',
+  type: 'execution',
+  capabilities: ['text_generation', 'reasoning']
+});
+
+// Use factory methods for common configurations
+const qwen3Agent = OllamaAgent.createQwen3Agent(config);
+const codeAgent = OllamaAgent.createCodeAgent(config);
+
+// RAG integration
+const ragAdapter = OllamaRAGAdapter.createQwen3Adapter();
+```
+
 ## Development Branches
 
 - The master local ai first branch is localai-master

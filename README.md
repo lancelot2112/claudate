@@ -528,7 +528,7 @@ claudate/
 │   │   │   ├── personal-assistant/ # Primary communication interface
 │   │   │   ├── gemini/            # Strategic planning agents  
 │   │   │   ├── claude/            # Execution & coding agents
-│   │   │   └── ollama/            # Local AI agents (Qwen3, PyTorch)
+│   │   │   └── ollama/            # Generic Ollama agents (supports any model)
 │   │   │
 │   │   ├── communication/         # Multi-channel communication
 │   │   │   ├── channels/          # SMS, MMS, Google Chat

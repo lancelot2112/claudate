@@ -323,11 +323,11 @@ npm run test:knowledge
 # Test the three-tier architecture
 npm test -- tests/integration/knowledge/
 
-# Test CLI integration (no external APIs needed)
-node test-direct-cli-rag.js
+# Test Ollama integration (local models)
+node run-ollama-service.js test
 
-# Test full RAG pipeline
-npm test -- tests/integration/knowledge/RAGIntegration.cli.test.ts
+# Test full RAG pipeline with Ollama (using Qwen3 model as example)
+npm test -- tests/integration/knowledge/RAGIntegration.ollama.qwen3.test.ts
 ```
 
 ---

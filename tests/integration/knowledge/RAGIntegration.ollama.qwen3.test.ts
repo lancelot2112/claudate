@@ -2,18 +2,18 @@ import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem';
 import { VectorStore } from '../../../src/knowledge/stores/VectorStore';
 import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSearch';
-import { Qwen3RAGAdapter } from '../../../src/integrations/ai/Qwen3RAGAdapter';
+import { OllamaRAGAdapter } from '../../../src/integrations/ai/OllamaRAGAdapter';
 import { 
   Document, 
   DocumentType,
   ContextMessage 
 } from '../../../src/types/Knowledge';
 
-describe('RAG System Integration with Qwen3', () => {
+describe('RAG System Integration with Ollama (Qwen3)', () => {
   let ragSystem: RAGSystem;
   let vectorStore: VectorStore;
   let semanticSearch: SemanticSearchEngine;
-  let qwen3Adapter: Qwen3RAGAdapter;
+  let ollamaAdapter: OllamaRAGAdapter;
 
   const knowledgeBase: Document[] = [
     {
@@ -95,7 +95,7 @@ describe('RAG System Integration with Qwen3', () => {
 
   beforeAll(async () => {
     // Initialize Qwen3 RAG adapter
-    qwen3Adapter = new Qwen3RAGAdapter('qwen3:8b');
+    ollamaAdapter = OllamaRAGAdapter.createQwen3Adapter();
 
     // Initialize vector store with Ollama embeddings
     vectorStore = new VectorStore({
@@ -119,7 +119,7 @@ describe('RAG System Integration with Qwen3', () => {
     const ragProviders = [
       {
         name: 'qwen3' as const,
-        client: qwen3Adapter,
+        client: ollamaAdapter,
         priority: 1,
         maxContextLength: 8000
       }
@@ -147,8 +147,8 @@ describe('RAG System Integration with Qwen3', () => {
   }, 60000); // 60 second timeout for setup
 
   afterAll(async () => {
-    if (qwen3Adapter) {
-      await qwen3Adapter.shutdown();
+    if (ollamaAdapter) {
+      await ollamaAdapter.shutdown();
     }
     if (vectorStore) {
       await vectorStore.cleanup();
@@ -224,18 +224,18 @@ describe('RAG System Integration with Qwen3', () => {
 
   describe('Qwen3 Adapter Health and Performance', () => {
     it('should pass health check', async () => {
-      const healthy = await qwen3Adapter.healthCheck();
+      const healthy = await ollamaAdapter.healthCheck();
       expect(healthy).toBe(true);
     }, 30000);
 
     it('should provide model information', () => {
-      const modelInfo = qwen3Adapter.getModelInfo();
-      expect(modelInfo.model).toContain('qwen3');
-      expect(modelInfo.status).toBeDefined();
+      const config = ollamaAdapter.getConfig();
+      expect(config.defaultModel).toContain('qwen3');
+      expect(config.name).toBeDefined();
     });
 
     it('should track token usage', async () => {
-      const response = await qwen3Adapter.sendMessage({
+      const response = await ollamaAdapter.sendMessage({
         messages: [{ role: 'user', content: 'What is AI?' }],
         temperature: 0.3
       });
