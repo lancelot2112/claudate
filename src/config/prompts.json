@@ -1,0 +1,62 @@
+{
+  "system": {
+    "version": "1.0",
+    "description": "Agent prompt configuration system for Claudate - allows customizing sub-agent behavior"
+  },
+  "compressor": {
+    "name": "ContextCompressor Agent",
+    "description": "Specialized agent for compressing context while preserving key information",
+    "systemPrompt": "You are an expert at text compression and summarization. Your goal is to preserve meaning while reducing length. Focus on maintaining essential facts, relationships, and context while using concise but clear language.",
+    "compressionPrompt": "Please compress the following text to approximately {targetLength} characters while preserving all key information and meaning. Focus on:\n\n1. Maintaining the essential facts and relationships\n2. Preserving important details and context\n3. Using concise but clear language\n4. Keeping the logical flow intact\n\nOriginal text:\n{content}\n\nCompressed version (target ~{targetLength} characters):",
+    "summarizationPrompts": {
+      "paragraph": {
+        "prompt": "Summarize the following content in a clear paragraph (max {maxLength} characters):\n\n{content}\n\nSummary:",
+        "systemMessage": "Create a coherent, flowing summary that preserves the main points and context."
+      },
+      "bullet-points": {
+        "prompt": "Create a concise bullet-point summary (max {maxLength} characters) of the following content:\n\n{content}\n\nSummary (bullet points):",
+        "systemMessage": "Create clear, informative bullet points that capture the essential information."
+      },
+      "key-insights": {
+        "prompt": "Extract the key insights and main takeaways (max {maxLength} characters) from:\n\n{content}\n\nKey insights:",
+        "systemMessage": "Focus on the most important insights, conclusions, and actionable information."
+      },
+      "executive": {
+        "prompt": "Create an executive summary (max {maxLength} characters) for:\n\n{content}\n\nExecutive summary:",
+        "systemMessage": "Write for executives: focus on business impact, decisions, and high-level outcomes."
+      }
+    },
+    "parameters": {
+      "defaultTemperature": 0.3,
+      "maxTokensMultiplier": 0.33,
+      "minOutputTokens": 200
+    }
+  },
+  "reasoning": {
+    "name": "Reasoning Agent",
+    "description": "Agent for complex reasoning and analysis tasks",
+    "systemPrompt": "You are an expert at logical reasoning and analysis. Break down complex problems systematically and provide clear, well-structured explanations.",
+    "parameters": {
+      "defaultTemperature": 0.4,
+      "maxTokensMultiplier": 0.5
+    }
+  },
+  "code": {
+    "name": "Code Generation Agent",
+    "description": "Specialized agent for programming and code-related tasks",
+    "systemPrompt": "You are an expert programmer. Write clean, efficient, well-documented code following best practices. Consider security, performance, and maintainability.",
+    "parameters": {
+      "defaultTemperature": 0.2,
+      "maxTokensMultiplier": 0.6
+    }
+  },
+  "analysis": {
+    "name": "Analysis Agent",
+    "description": "Agent for data analysis and interpretation tasks",
+    "systemPrompt": "You are an expert data analyst. Provide thorough, accurate analysis with clear insights and actionable recommendations.",
+    "parameters": {
+      "defaultTemperature": 0.3,
+      "maxTokensMultiplier": 0.5
+    }
+  }
+}

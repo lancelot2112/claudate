@@ -44,6 +44,58 @@ const codeAgent = OllamaAgent.createCodeAgent(config);
 const ragAdapter = OllamaRAGAdapter.createQwen3Adapter();
 ```
 
+## Context Compression Architecture
+
+The system includes an intelligent context compression system for efficient memory management:
+
+### Key Features
+- **Generic AI Provider Integration**: Works with any Ollama model through unified interface
+- **Model-Aware Context Windows**: Respects model-specific limits (Qwen3: 8192, CodeLlama: 16384)
+- **Configurable Prompt System**: Customizable compression behavior via `src/config/prompts.json`
+- **Intelligent Fallbacks**: Semantic → Statistical compression hierarchy
+
+### Usage Examples
+```typescript
+// Create context compressor with any provider
+const compressor = new ContextCompressor(ollamaRAGAdapter);
+
+// Compress with automatic context window management
+const result = await compressor.compressContext(largeText);
+
+// Custom compression behavior
+compressor.setPromptOverride({
+  systemPrompt: "Technical documentation compressor",
+  compressionPrompt: "Preserve code examples and technical details: {content}"
+});
+
+// Different summarization styles
+const summary = await compressor.summarizeContext(text, {
+  style: 'executive',
+  includeActionItems: true
+});
+```
+
+### Compression Methods
+- **Semantic Compression**: AI-powered, preserves meaning and relationships
+- **Statistical Compression**: Keyword-based fallback for reliability  
+- **Chunked Processing**: Handles content exceeding context windows
+- **Custom Prompts**: Task-specific compression via PromptManager
+
+### Configuration
+```json
+// src/config/prompts.json
+{
+  "compressor": {
+    "systemPrompt": "You are an expert at text compression...",
+    "compressionPrompt": "Compress to {targetLength} characters: {content}",
+    "parameters": {
+      "defaultTemperature": 0.3,
+      "maxTokensMultiplier": 0.33
+    }
+  }
+}
+```
+
 ## Development Branches
 
 - The master local ai first branch is localai-master

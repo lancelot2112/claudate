@@ -52,17 +52,20 @@ export interface RAGResponse {
  */
 export class OllamaRAGAdapter implements AIProvider {
   readonly name: string = 'ollama-rag-adapter';
-  readonly capabilities: AICapabilities = {
-    textGeneration: true,
-    embedding: true,
-    multiModal: false,
-    streaming: false,
-    functionCalling: false,
-    localExecution: true,
-    supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b']
-  };
+  readonly capabilities: AICapabilities;
 
-  constructor(private agent: OllamaAgent) {}
+  constructor(private agent: OllamaAgent) {
+    this.capabilities = {
+      textGeneration: true,
+      embedding: true,
+      multiModal: false,
+      streaming: false,
+      functionCalling: false,
+      localExecution: true,
+      supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b'],
+      maxContextWindow: agent.getMaxContextWindow()
+    };
+  }
 
   /**
    * Create a Qwen3-compatible RAG adapter (factory method)
@@ -160,6 +163,20 @@ export class OllamaRAGAdapter implements AIProvider {
     // For now, throw an error as embedding generation should go through
     // the dedicated embedding provider, not the RAG adapter
     throw new Error('Embedding generation not supported in RAG adapter - use dedicated embedding provider');
+  }
+
+  /**
+   * Get maximum context window size
+   */
+  getMaxContextWindow(): number {
+    return this.agent.getMaxContextWindow();
+  }
+
+  /**
+   * Estimate token count for text
+   */
+  estimateTokenCount(text: string): number {
+    return this.agent.estimateTokenCount(text);
   }
 
   /**

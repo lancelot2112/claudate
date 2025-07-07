@@ -314,11 +314,32 @@ Claudate maintains sophisticated context for each agent to ensure optimal perfor
 
 ### Context Optimization
 
-**Contextual Compression:**
-- Intelligent summarization of historical data
-- Pattern extraction from conversation history
-- Semantic preservation with reduced token usage
-- Relevance-based filtering and prioritization
+**Intelligent Context Compression System:**
+- **Generic AI Provider Integration**: Works with any Ollama model through unified interface
+- **Model-Aware Context Windows**: Respects model-specific limits (Qwen3: 8192, CodeLlama: 16384)
+- **Configurable Prompt System**: Customizable compression behavior via JSON configuration
+- **Semantic Compression**: AI-powered compression preserving meaning and relationships
+- **Statistical Fallback**: Keyword-based compression for reliability when AI is unavailable
+- **Chunked Processing**: Intelligent handling of content exceeding context windows
+- **Custom Compression Modes**: Task-specific compression for different content types
+
+```typescript
+// Example: Context compression usage
+const compressor = new ContextCompressor(ollamaRAGAdapter, {
+  targetCompressionRatio: 0.4,
+  respectContextWindow: true,
+  useSemanticCompression: true
+});
+
+// Compress large context while preserving key information
+const result = await compressor.compressContext(largeText);
+
+// Custom compression for technical documentation
+compressor.setPromptOverride({
+  systemPrompt: "Technical documentation compressor",
+  compressionPrompt: "Preserve code examples and API details: {content}"
+});
+```
 
 **Proactive Context Loading:**
 - Predictive context retrieval based on user patterns
@@ -549,6 +570,10 @@ claudate/
 │   │   │   ├── communication/     # Twilio, Google services
 │   │   │   └── storage/           # Database connectors
 │   │   │
+│   │   ├── config/               # Configuration management
+│   │   │   ├── prompts.json       # Agent prompt configurations
+│   │   │   └── PromptManager.ts   # Dynamic prompt management
+│   │   │
 │   │   ├── context/               # Advanced context management
 │   │   │   ├── managers/          # Session & handoff management
 │   │   │   ├── storage/           # Hot/Warm/Cold storage tiers
@@ -576,6 +601,7 @@ claudate/
 │   │
 │   └── examples/                  # Usage examples & demos
 │       ├── dual-cli-rag.ts        # RAG with local AI
+│       ├── context-compression-example.ts # Context compression demo
 │       └── rag-with-cli.ts        # CLI integration examples
 │
 ├── 🔧 Infrastructure & Tools

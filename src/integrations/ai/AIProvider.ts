@@ -57,6 +57,7 @@ export interface AICapabilities {
   functionCalling: boolean;
   localExecution: boolean;
   supportedModels: string[];
+  maxContextWindow?: number; // Maximum context window size in tokens
 }
 
 export interface HealthStatus {
@@ -108,6 +109,10 @@ export interface AIProvider {
   generateText(request: TextGenerationRequest): Promise<TextGenerationResponse>;
   generateEmbedding(request: EmbeddingRequest): Promise<EmbeddingResponse>;
   
+  // Context management
+  getMaxContextWindow(): number;
+  estimateTokenCount(text: string): number;
+  
   // Health monitoring
   healthCheck(): Promise<HealthStatus>;
   getMetrics(): Promise<ProviderMetrics>;
@@ -148,6 +153,15 @@ export abstract class BaseAIProvider implements AIProvider {
   
   abstract generateText(request: TextGenerationRequest): Promise<TextGenerationResponse>;
   abstract generateEmbedding(request: EmbeddingRequest): Promise<EmbeddingResponse>;
+  
+  getMaxContextWindow(): number {
+    return this.capabilities.maxContextWindow || 4000; // Default fallback
+  }
+  
+  estimateTokenCount(text: string): number {
+    // Simple estimation: ~4 characters per token on average
+    return Math.ceil(text.length / 4);
+  }
   
   async healthCheck(): Promise<HealthStatus> {
     const startTime = Date.now();

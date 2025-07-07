@@ -475,6 +475,55 @@ export class OllamaAgent extends BaseAgent {
     };
   }
 
+  // Get maximum context window size for the current model
+  public getMaxContextWindow(): number {
+    // Model-specific context windows (in tokens)
+    const contextWindows: Record<string, number> = {
+      'qwen3:8b': 8192,
+      'qwen2.5-coder:7b': 8192,
+      'llama3.2:3b': 8192,
+      'llama3.2:1b': 4096,
+      'mistral:7b': 8192,
+      'codellama:7b': 16384,
+      'codellama:13b': 16384,
+      'codellama:34b': 16384
+    };
+
+    return contextWindows[this.modelName] || 8000; // Default fallback
+  }
+
+  // Estimate token count for the current model
+  public estimateTokenCount(text: string): number {
+    // Model-specific token estimation (characters per token vary by model)
+    const tokensPerChar: Record<string, number> = {
+      'qwen3:8b': 0.27, // ~3.7 chars per token
+      'qwen2.5-coder:7b': 0.3, // ~3.3 chars per token (more tokens for code)
+      'llama3.2:3b': 0.25, // ~4 chars per token
+      'llama3.2:1b': 0.25,
+      'mistral:7b': 0.25,
+      'codellama:7b': 0.3, // Code models have different tokenization
+      'codellama:13b': 0.3,
+      'codellama:34b': 0.3
+    };
+
+    const baseRate = tokensPerChar[this.modelName] || 0.25; // Default: ~4 chars per token
+    const baseTokens = Math.ceil(text.length * baseRate);
+
+    // Adjust for code vs natural language
+    const codePatterns = /[{}();,.\[\]]/g;
+    const codeMatches = text.match(codePatterns);
+    const codeAdjustment = codeMatches ? codeMatches.length * 0.1 : 0;
+
+    return Math.ceil(baseTokens + codeAdjustment);
+  }
+
+  // Check if text fits within context window
+  public fitsInContextWindow(text: string, reserveTokens: number = 1000): boolean {
+    const estimatedTokens = this.estimateTokenCount(text);
+    const maxTokens = this.getMaxContextWindow();
+    return estimatedTokens <= (maxTokens - reserveTokens);
+  }
+
   // Create factory method for common model configurations
   public static createQwen3Agent(config: Omit<OllamaAgentConfig, 'modelName'>): OllamaAgent {
     return new OllamaAgent({

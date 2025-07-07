@@ -328,6 +328,12 @@ node run-ollama-service.js test
 
 # Test full RAG pipeline with Ollama (using Qwen3 model as example)
 npm test -- tests/integration/knowledge/RAGIntegration.ollama.qwen3.test.ts
+
+# Test context compression system
+npm test -- tests/unit/knowledge/ContextCompressor.test.ts
+
+# Run context compression example
+npx ts-node examples/context-compression-example.ts
 ```
 
 ---
@@ -460,11 +466,59 @@ npm run db:seed
 
 ---
 
+## Context Compression Integration
+
+The system includes an intelligent context compression system for efficient memory management:
+
+### Setup
+Context compression works with any development level and requires minimal additional setup:
+
+```bash
+# Context compression is automatically available with any Ollama setup
+# Configuration is managed via src/config/prompts.json
+
+# Test the compression system
+npm test -- tests/unit/knowledge/ContextCompressor.test.ts
+
+# See practical example
+npx ts-node examples/context-compression-example.ts
+```
+
+### Key Features
+- **Model-Aware**: Automatically respects context window limits for different models
+- **Configurable**: Customize compression behavior via JSON configuration
+- **Intelligent Fallbacks**: Semantic compression with statistical backup
+- **Performance Optimized**: Chunked processing for large content
+
+### Usage with Database Tiers
+Context compression integrates seamlessly with the three-tier architecture:
+
+- **Hot Storage (Redis)**: Compressed current session context
+- **Warm Storage (PostgreSQL)**: Compressed conversation summaries  
+- **Cold Storage (Vector DB)**: Compressed historical insights
+
+### Configuration Example
+```json
+{
+  "compressor": {
+    "systemPrompt": "Specialized context compressor for development logs",
+    "compressionPrompt": "Compress debug logs preserving error patterns: {content}",
+    "parameters": {
+      "defaultTemperature": 0.2,
+      "targetCompressionRatio": 0.3
+    }
+  }
+}
+```
+
+---
+
 ## Next Steps
 
 1. **Choose your development level** (1, 2, or 3 above)
 2. **Run the setup commands** for your chosen level
 3. **Test the integration** with our CLI-based tests
-4. **Start developing** with full three-tier knowledge architecture
+4. **Configure context compression** for your specific use case
+5. **Start developing** with full three-tier knowledge architecture
 
 The CLI integration means you can start with Level 1 (minimal setup) and scale up to Level 3 as needed, without being blocked by external service requirements!
