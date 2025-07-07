@@ -1,6 +1,42 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { OllamaAgent, OllamaAgentConfig } from '../../../src/agents/ollama/OllamaAgent';
 import { AgentContext } from '../../../src/types/Agent';
+
+// Mock the OllamaClient to avoid real API calls
+jest.mock('../../../src/integrations/ai/OllamaClient', () => {
+  return {
+    OllamaClient: jest.fn().mockImplementation(() => ({
+      sendMessage: jest.fn().mockImplementation((request: any) => {
+        // Check if this is a health check request
+        const isHealthCheck = request.messages?.some((msg: any) => 
+          msg.content?.includes('Test message for health check')
+        );
+        
+        return Promise.resolve({
+          content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
+          model: request.model || 'qwen3:8b',
+          done: true,
+          total_duration: 1000,
+          eval_count: 20
+        });
+      }),
+      generateEmbeddings: jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]])),
+      healthCheck: jest.fn(() => Promise.resolve({
+        healthy: true,
+        latencyMs: 100,
+        timestamp: new Date()
+      }))
+    }))
+  };
+});
+
+// Mock the logger to avoid console output during tests
+jest.mock('../../../src/utils/logger', () => ({
+  info: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn()
+}));
 
 describe('OllamaAgent', () => {
   describe('Static Methods', () => {
@@ -175,95 +211,59 @@ describe('OllamaAgent', () => {
     });
 
     it('should infer coding task type', async () => {
-      try {
-        const context = createMockContext('Write a JavaScript function to sort an array');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('coding');
-      } catch (error) {
-        // If Ollama is not available, skip this test
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true); // Skip gracefully
-      }
+      const context = createMockContext('Write a JavaScript function to sort an array');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('coding');
     });
 
     it('should infer analysis task type', async () => {
-      try {
-        const context = createMockContext('Analyze the pros and cons of renewable energy');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('analysis');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('Analyze the pros and cons of renewable energy');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('analysis');
     });
 
     it('should infer reasoning task type', async () => {
-      try {
-        const context = createMockContext('Explain why the sky is blue');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('reasoning');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('Explain why the sky is blue');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('reasoning');
     });
 
     it('should infer translation task type', async () => {
-      try {
-        const context = createMockContext('Translate this to Spanish: Hello world');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('translation');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('Translate this to Spanish: Hello world');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('translation');
     });
 
     it('should infer summarization task type', async () => {
-      try {
-        const context = createMockContext('Summarize the following article: ...');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('summarization');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('Summarize the following article: ...');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('summarization');
     });
 
     it('should infer creative writing task type', async () => {
-      try {
-        const context = createMockContext('Write a short story about space exploration');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('creative_writing');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('Write a short story about space exploration');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('creative_writing');
     });
 
     it('should infer question answering for questions', async () => {
-      try {
-        const context = createMockContext('What is the capital of France?');
-        const result = await agent.executeTask(context);
-        
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('question_answering');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const context = createMockContext('What is the capital of France?');
+      const result = await agent.executeTask(context);
+      
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('question_answering');
     });
   });
 
@@ -339,15 +339,9 @@ describe('OllamaAgent', () => {
     });
 
     it('should perform health check', async () => {
-      try {
-        const isHealthy = await agent.healthCheck();
-        // If Ollama is available, should return true/false
-        expect(typeof isHealthy).toBe('boolean');
-      } catch (error) {
-        // If Ollama is not available, this is expected
-        console.log('Skipping Ollama health check - service not available');
-        expect(true).toBe(true);
-      }
+      const isHealthy = await agent.healthCheck();
+      expect(typeof isHealthy).toBe('boolean');
+      expect(isHealthy).toBe(true); // Mocked to return true
     });
   });
 
@@ -371,32 +365,27 @@ describe('OllamaAgent', () => {
     });
 
     it('should handle structured task objects', async () => {
-      try {
-        const context: AgentContext = {
-          sessionId: 'test-session',
-          userId: 'test-user',
-          task: {
-            type: 'coding',
-            description: 'Write a hello world function',
-            format: 'code',
-            temperature: 0.3
-          },
-          timestamp: new Date(),
-          metadata: {},
-          conversationHistory: [],
-          contextWindow: 4000,
-          recentDecisions: [],
-          activeProjects: [],
-          userPreferences: {}
-        };
+      const context: AgentContext = {
+        sessionId: 'test-session',
+        userId: 'test-user',
+        task: {
+          type: 'coding',
+          description: 'Write a hello world function',
+          format: 'code',
+          temperature: 0.3
+        },
+        timestamp: new Date(),
+        metadata: {},
+        conversationHistory: [],
+        contextWindow: 4000,
+        recentDecisions: [],
+        activeProjects: [],
+        userPreferences: {}
+      };
 
-        const result = await agent.executeTask(context);
-        expect(result.success).toBe(true);
-        expect(result.metadata?.taskType).toBe('coding');
-      } catch (error) {
-        console.log('Skipping Ollama test - service not available');
-        expect(true).toBe(true);
-      }
+      const result = await agent.executeTask(context);
+      expect(result.success).toBe(true);
+      expect(result.metadata?.taskType).toBe('coding');
     });
   });
 
