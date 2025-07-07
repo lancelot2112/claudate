@@ -224,8 +224,9 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
 
   describe('Qwen3 Adapter Health and Performance', () => {
     it('should pass health check', async () => {
-      const healthy = await ollamaAdapter.healthCheck();
-      expect(healthy).toBe(true);
+      const healthStatus = await ollamaAdapter.healthCheck();
+      expect(healthStatus.healthy).toBe(true);
+      expect(healthStatus.timestamp).toBeInstanceOf(Date);
     }, 30000);
 
     it('should provide model information', () => {

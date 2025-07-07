@@ -421,6 +421,7 @@ export class OllamaAgent extends BaseAgent {
       const response = await this.ollamaClient.sendMessage({
         model: this.modelName,
         messages: [{ role: 'user', content: 'Test message for health check. Please respond with OK.' }],
+        think: false,
         options: {
           temperature: 0.1
         }

@@ -6,10 +6,24 @@ dotenv.config({ path: '.env.test' });
 // Set test environment
 process.env.NODE_ENV = 'test';
 process.env.LOG_LEVEL = 'error'; // Reduce logging during tests
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/claudate_test';
-process.env.DATABASE_PASSWORD = 'test';
-process.env.REDIS_URL = 'redis://localhost:6379/0';
-process.env.REDIS_PASSWORD = 'test';
+
+// Use real database credentials if docker containers are available, otherwise use test credentials
+const useRealDatabase = process.env.USE_REAL_DATABASE === 'true' || 
+                        process.env.CI !== 'true'; // Use real DB locally, test DB in CI
+
+if (useRealDatabase) {
+  // Real database credentials for integration tests (when Docker containers are available)
+  process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://claudate:claudate_dev_password@localhost:5432/claudate';
+  process.env.DATABASE_PASSWORD = process.env.DATABASE_PASSWORD || 'claudate_dev_password';
+  process.env.REDIS_URL = process.env.REDIS_URL || 'redis://:claudate_redis_password@localhost:6379';
+  process.env.REDIS_PASSWORD = process.env.REDIS_PASSWORD || 'claudate_redis_password';
+} else {
+  // Test database credentials for CI or when USE_REAL_DATABASE=false
+  process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/claudate_test';
+  process.env.DATABASE_PASSWORD = 'test';
+  process.env.REDIS_URL = 'redis://localhost:6379/0';
+  process.env.REDIS_PASSWORD = 'test';
+}
 process.env.JWT_SECRET = 'test-jwt-secret';
 process.env.API_BASE_URL = 'http://localhost:3000';
 process.env.PUBLIC_URL = 'http://localhost:3000';

@@ -12,6 +12,7 @@ export interface OllamaRequest {
   messages?: OllamaMessage[];
   prompt?: string;
   stream?: boolean;
+  think?: boolean;
   options?: {
     temperature?: number;
     top_p?: number;
@@ -89,6 +90,7 @@ export class OllamaClient {
           model,
           messages: request.messages,
           stream: false,
+          think: request.think,
           options: request.options
         });
       } else if (request.prompt) {
@@ -97,6 +99,7 @@ export class OllamaClient {
           model,
           prompt: request.prompt,
           stream: false,
+          think: request.think,
           options: request.options
         });
       } else {
