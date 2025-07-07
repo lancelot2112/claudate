@@ -14,11 +14,16 @@ class MockAgent extends BaseAgent {
   }
 
   public async executeTask(context: AgentContext): Promise<AgentResult> {
-    return this.mockExecuteTask(context) as AgentResult;
+    return this.mockExecuteTask(context) as Promise<AgentResult>;
   }
 
   public async getCapabilities(): Promise<string[]> {
     return this.capabilities || ['mock_capability'];
+  }
+
+  // Public method to access protected updateStatus
+  public setStatus(status: string): void {
+    (this as any).updateStatus(status);
   }
 }
 
@@ -60,21 +65,21 @@ describe('AgentCoordinator Integration Tests', () => {
     });
 
     // Setup default successful responses
-    mockAgent1.mockExecuteTask.mockResolvedValue({
+    (mockAgent1.mockExecuteTask as any).mockResolvedValue({
       success: true,
       agentId: mockAgent1.id,
       timestamp: Date.now(),
       metadata: {}
     });
 
-    mockAgent2.mockExecuteTask.mockResolvedValue({
+    (mockAgent2.mockExecuteTask as any).mockResolvedValue({
       success: true,
       agentId: mockAgent2.id,
       timestamp: Date.now(),
       metadata: {}
     });
 
-    mockAgent3.mockExecuteTask.mockResolvedValue({
+    (mockAgent3.mockExecuteTask as any).mockResolvedValue({
       success: true,
       agentId: mockAgent3.id,
       timestamp: Date.now(),
@@ -121,7 +126,7 @@ describe('AgentCoordinator Integration Tests', () => {
       
       const agentStatus = coordinator.getAgentStatus();
       expect(agentStatus).toHaveLength(1);
-      expect(agentStatus[0].agentId).toBe(mockAgent2.id);
+      expect(agentStatus[0]?.agentId).toBe(mockAgent2.id);
     });
   });
 
@@ -249,7 +254,7 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should handle agent busy scenario', async () => {
       // Make first agent busy
-      mockAgent1.updateStatus('processing');
+      mockAgent1.setStatus('processing');
       
       const taskId = await coordinator.submitTask(
         ['coding'],
@@ -307,7 +312,7 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should handle agent execution failure', async () => {
       // Make agent fail
-      mockAgent1.mockExecuteTask.mockRejectedValue(new Error('Agent execution failed'));
+      (mockAgent1.mockExecuteTask as any).mockRejectedValue(new Error('Agent execution failed'));
 
       const taskId = await coordinator.submitTask(
         ['coding'],
@@ -327,12 +332,12 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should retry failed tasks when appropriate', async () => {
       // First call fails, second succeeds
-      mockAgent1.mockExecuteTask
+      (mockAgent1.mockExecuteTask as any)
         .mockRejectedValueOnce(new Error('Temporary failure'))
         .mockResolvedValueOnce({
           success: true,
           agentId: mockAgent1.id,
-          timestamp: new Date()
+          timestamp: Date.now()
         });
 
       const taskId = await coordinator.submitTask(
@@ -372,7 +377,7 @@ describe('AgentCoordinator Integration Tests', () => {
 
     test('should track agent performance metrics', async () => {
       // Execute successful task
-      const taskId = await coordinator.submitTask(
+      await coordinator.submitTask(
         ['coding'],
         createMockAgentContext({
           userId: 'user1',
@@ -401,10 +406,10 @@ describe('AgentCoordinator Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 1100));
 
       // Second task fails
-      mockAgent1.mockExecuteTask.mockResolvedValueOnce({
+      (mockAgent1.mockExecuteTask as any).mockResolvedValueOnce({
         success: false,
         agentId: mockAgent1.id,
-        timestamp: new Date(),
+        timestamp: Date.now(),
         error: 'Task failed'
       });
 

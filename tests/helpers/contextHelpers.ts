@@ -51,16 +51,20 @@ export function createMockAgentContext(options: MockAgentContextOptions = {}): A
  * Creates a mock BaseMessage for testing
  */
 export function createMockMessage(options: {
-  role?: 'user' | 'assistant' | 'system';
+  type?: 'text' | 'image' | 'audio' | 'video' | 'file' | 'chart' | 'media';
+  urgency?: 'critical' | 'high' | 'normal' | 'low';
   content?: string;
+  sender?: string;
   timestamp?: Date;
   metadata?: Record<string, any>;
 } = {}): BaseMessage {
   return {
     id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    role: options.role || 'user',
-    content: options.content || 'Test message content',
     timestamp: options.timestamp || new Date(),
+    type: options.type || 'text',
+    urgency: options.urgency || 'normal',
+    content: options.content || 'Test message content',
+    sender: options.sender || 'test-user',
     metadata: options.metadata || {}
   };
 }
@@ -107,9 +111,9 @@ export function createMockContextBatch(count: number, baseOptions: MockAgentCont
  */
 export function createRichMockAgentContext(options: MockAgentContextOptions = {}): AgentContext {
   const conversationHistory = options.conversationHistory || [
-    createMockMessage({ role: 'user', content: 'Hello, I need help with a technical issue' }),
-    createMockMessage({ role: 'assistant', content: 'I can help you with that. What specific issue are you facing?' }),
-    createMockMessage({ role: 'user', content: options.task?.toString() || 'The login system is not working properly' })
+    createMockMessage({ sender: 'user', content: 'Hello, I need help with a technical issue' }),
+    createMockMessage({ sender: 'assistant', content: 'I can help you with that. What specific issue are you facing?' }),
+    createMockMessage({ sender: 'user', content: options.task?.toString() || 'The login system is not working properly' })
   ];
 
   const recentDecisions = options.recentDecisions || [
