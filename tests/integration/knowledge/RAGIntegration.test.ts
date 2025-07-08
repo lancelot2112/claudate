@@ -1,9 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll, jest } from '@jest/globals';
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { RAGSystem } from '../../../src/knowledge/rag/RAGSystem';
 import { VectorStore } from '../../../src/knowledge/stores/VectorStore';
 import { SemanticSearchEngine } from '../../../src/knowledge/search/SemanticSearch';
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
-import { GeminiClient } from '../../../src/integrations/ai/GeminiClient';
+import { OllamaRAGAdapter } from '../../../src/integrations/ai/OllamaRAGAdapter';
 import { 
   Document, 
   DocumentType,
@@ -15,8 +14,7 @@ describe('RAG System Integration', () => {
   let ragSystem: RAGSystem;
   let vectorStore: VectorStore;
   let semanticSearch: SemanticSearchEngine;
-  let anthropicClient: AnthropicClient;
-  let geminiClient: GeminiClient;
+  let ollamaAdapter: OllamaRAGAdapter;
 
   const knowledgeBase: Document[] = [
     {
@@ -149,16 +147,8 @@ describe('RAG System Integration', () => {
   ];
 
   beforeAll(async () => {
-    // Initialize AI clients
-    anthropicClient = new AnthropicClient({
-      apiKey: process.env.ANTHROPIC_API_KEY || 'test-key',
-      defaultModel: 'claude-3-haiku-20240307'
-    });
-
-    geminiClient = new GeminiClient({
-      apiKey: process.env.GEMINI_API_KEY || 'test-key',
-      defaultModel: 'gemini-pro'
-    });
+    // Initialize AI client
+    ollamaAdapter = OllamaRAGAdapter.createQwen3Adapter();
 
     // Initialize vector store
     vectorStore = new VectorStore({
@@ -182,15 +172,9 @@ describe('RAG System Integration', () => {
     // Initialize RAG system
     const ragProviders = [
       {
-        name: 'claude' as const,
-        client: anthropicClient,
+        name: 'ollama-qwen3',
+        client: ollamaAdapter,
         priority: 1,
-        maxContextLength: 8000
-      },
-      {
-        name: 'gemini' as const,
-        client: geminiClient,
-        priority: 2,
         maxContextLength: 8000
       }
     ];
@@ -222,7 +206,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'What is artificial intelligence?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response.answer).toBeDefined();
@@ -239,7 +223,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'What are the main types of machine learning algorithms?',
         [],
-        5
+        { maxSources: 5 }
       );
 
       expect(response.sources.length).toBeGreaterThan(0);
@@ -255,7 +239,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'How do neural networks relate to machine learning and data science?',
         [],
-        4
+        { maxSources: 4 }
       );
 
       expect(response.sources.length).toBeGreaterThan(1);
@@ -380,7 +364,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'How do you train a neural network?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response.sources.length).toBeGreaterThan(0);
@@ -402,7 +386,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'What is quantum computing?',
         [],
-        5
+        { maxSources: 5 }
       );
 
       // Should still return some documents but with lower confidence
@@ -419,8 +403,8 @@ describe('RAG System Integration', () => {
     it('should work with Anthropic Claude', async () => {
       const anthropicProviders = [
         {
-          name: 'claude' as const,
-          client: anthropicClient,
+          name: 'ollama-qwen3',
+          client: ollamaAdapter,
           priority: 1,
           maxContextLength: 6000
         }
@@ -438,7 +422,7 @@ describe('RAG System Integration', () => {
       const response = await anthropicRAG.askQuestion(
         'Compare supervised and unsupervised learning',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response.answer).toBeDefined();
@@ -455,8 +439,8 @@ describe('RAG System Integration', () => {
 
       const geminiProviders = [
         {
-          name: 'gemini' as const,
-          client: geminiClient,
+          name: 'ollama-qwen3',
+          client: ollamaAdapter,
           priority: 1,
           maxContextLength: 6000
         }
@@ -474,7 +458,7 @@ describe('RAG System Integration', () => {
       const response = await geminiRAG.askQuestion(
         'What tools are commonly used in data science?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response.answer).toBeDefined();
@@ -500,7 +484,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'What are the key branches of AI?',
         [],
-        2
+        { maxSources: 2 }
       );
 
       expect(response.sources.length).toBeGreaterThan(0);
@@ -536,8 +520,8 @@ describe('RAG System Integration', () => {
       
       const emptyProviders = [
         {
-          name: 'claude' as const,
-          client: anthropicClient,
+          name: 'ollama-qwen3',
+          client: ollamaAdapter,
           priority: 1,
           maxContextLength: 4000
         }
@@ -552,7 +536,7 @@ describe('RAG System Integration', () => {
         }
       );
 
-      const response = await emptyRAG.askQuestion('What is AI?', [], 3);
+      const response = await emptyRAG.askQuestion('What is AI?', [], { maxSources: 3 });
 
       expect(response.answer).toBeDefined();
       expect(response.sources.length).toBe(0);
@@ -565,7 +549,7 @@ describe('RAG System Integration', () => {
       const longQuestion = 'What is machine learning? '.repeat(100) + 
         'Please provide a comprehensive answer covering all aspects of the field.';
 
-      const response = await ragSystem.askQuestion(longQuestion, [], 3);
+      const response = await ragSystem.askQuestion(longQuestion, [], { maxSources: 3 });
 
       expect(response.answer).toBeDefined();
       expect(response.sources.length).toBeGreaterThan(0);
@@ -575,7 +559,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'How do you bake a chocolate cake?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       // Should still provide a response, even if not well-informed
@@ -607,7 +591,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'Explain the difference between supervised and unsupervised learning',
         [],
-        3
+        { maxSources: 3 }
       );
       
       const responseTime = Date.now() - startTime;
@@ -625,7 +609,7 @@ describe('RAG System Integration', () => {
       ];
 
       const promises = questions.map(q => 
-        ragSystem.askQuestion(q, [], 2)
+        ragSystem.askQuestion(q, [], { maxSources: 2 })
       );
 
       const responses = await Promise.all(promises);
@@ -638,8 +622,8 @@ describe('RAG System Integration', () => {
     it('should optimize context length usage', async () => {
       const smallContextProviders = [
         {
-          name: 'claude' as const,
-          client: anthropicClient,
+          name: 'ollama-qwen3',
+          client: ollamaAdapter,
           priority: 1,
           maxContextLength: 2000
         }
@@ -657,7 +641,7 @@ describe('RAG System Integration', () => {
       const response = await ragWithSmallContext.askQuestion(
         'Provide a comprehensive overview of all machine learning techniques',
         [],
-        5
+        { maxSources: 5 }
       );
 
       expect(response.answer).toBeDefined();
@@ -673,7 +657,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'What are the main components of a neural network?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response.metadata).toBeDefined();
@@ -688,7 +672,7 @@ describe('RAG System Integration', () => {
       const response = await ragSystem.askQuestion(
         'How is model evaluation performed in machine learning?',
         [],
-        4
+        { maxSources: 4 }
       );
 
       expect(response.sources.length).toBeGreaterThan(0);
