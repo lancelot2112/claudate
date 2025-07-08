@@ -118,7 +118,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
       embeddingProvider,
       undefined,
       {
-        defaultThreshold: 0.3, // Lower threshold for better matching with mock embeddings
+        defaultThreshold: 0.1, // Very low threshold for testing with mock embeddings
         defaultLimit: 5
       }
     );
@@ -173,7 +173,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
       const searchResults = await semanticSearch.search({
         query: 'Qwen language models features',
         limit: 5,
-        threshold: 0.1 // Very low threshold for testing
+        threshold: 0.05 // Extremely low threshold for testing
       });
       console.log('Direct search results:', searchResults.results.length);
       

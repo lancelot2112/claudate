@@ -32,25 +32,102 @@ export interface EmbeddingProvider {
 export class MockEmbeddingProvider implements EmbeddingProvider {
   private dimensions: number;
   private model: string;
+  private semanticKeywords: Map<string, number[]> = new Map();
 
   constructor(dimensions = 384) {
     this.dimensions = dimensions;
     this.model = 'mock-embedding-provider';
+    this.initializeSemanticKeywords();
+  }
+
+  private initializeSemanticKeywords() {
+    // Define semantic clusters for better similarity matching
+    this.semanticKeywords = new Map([
+      // AI/Machine Learning cluster
+      ['ai', [0.8, 0.7, 0.2, 0.1]],
+      ['artificial', [0.8, 0.7, 0.2, 0.1]], 
+      ['intelligence', [0.8, 0.7, 0.2, 0.1]],
+      ['machine', [0.7, 0.8, 0.3, 0.1]],
+      ['learning', [0.7, 0.8, 0.3, 0.1]],
+      ['model', [0.6, 0.7, 0.4, 0.2]],
+      ['models', [0.6, 0.7, 0.4, 0.2]],
+      ['neural', [0.7, 0.6, 0.5, 0.2]],
+      ['algorithm', [0.6, 0.6, 0.5, 0.3]],
+      
+      // Language/NLP cluster  
+      ['language', [0.2, 0.8, 0.7, 0.1]],
+      ['text', [0.2, 0.7, 0.8, 0.1]],
+      ['nlp', [0.2, 0.8, 0.7, 0.1]],
+      ['processing', [0.3, 0.7, 0.6, 0.2]],
+      ['generation', [0.3, 0.6, 0.8, 0.1]],
+      ['embedding', [0.4, 0.7, 0.6, 0.2]],
+      ['qwen', [0.5, 0.8, 0.6, 0.3]],
+      ['llm', [0.6, 0.8, 0.5, 0.2]],
+      
+      // Deployment/Technical cluster
+      ['local', [0.1, 0.2, 0.3, 0.8]],
+      ['deployment', [0.2, 0.3, 0.2, 0.8]],
+      ['ollama', [0.3, 0.4, 0.2, 0.7]],
+      ['server', [0.2, 0.2, 0.3, 0.7]],
+      ['api', [0.2, 0.3, 0.4, 0.6]],
+      ['service', [0.2, 0.3, 0.4, 0.6]],
+      ['privacy', [0.1, 0.2, 0.2, 0.7]],
+      ['offline', [0.1, 0.2, 0.2, 0.8]],
+      ['cost', [0.1, 0.1, 0.2, 0.6]],
+      
+      // RAG/Retrieval cluster
+      ['rag', [0.6, 0.5, 0.8, 0.4]],
+      ['retrieval', [0.5, 0.4, 0.8, 0.3]],
+      ['search', [0.4, 0.5, 0.7, 0.3]],
+      ['vector', [0.5, 0.6, 0.7, 0.2]],
+      ['database', [0.3, 0.4, 0.6, 0.5]],
+      ['semantic', [0.4, 0.7, 0.8, 0.2]],
+      ['similarity', [0.4, 0.6, 0.7, 0.2]],
+      ['context', [0.5, 0.6, 0.6, 0.3]],
+    ]);
   }
 
   async generateEmbedding(text: string): Promise<number[]> {
-    // Generate deterministic mock embeddings based on text hash
-    const hash = this.hashString(text);
-    const embedding = new Array(this.dimensions);
+    const words = text.toLowerCase().split(/\s+/);
+    const embedding = new Array(this.dimensions).fill(0);
     
+    // Start with base hash-based embedding for determinism
+    const baseHash = this.hashString(text);
     for (let i = 0; i < this.dimensions; i++) {
-      // Use hash and position to generate deterministic values
-      embedding[i] = Math.sin((hash + i) * 0.01) * 0.5;
+      embedding[i] = Math.sin((baseHash + i) * 0.01) * 0.1; // Reduced magnitude for base
+    }
+    
+    // Add semantic components based on keywords
+    let semanticMatches = 0;
+    for (const word of words) {
+      const semanticVector = this.semanticKeywords.get(word);
+      if (semanticVector) {
+        semanticMatches++;
+        // Add semantic signal to first few dimensions
+        for (let i = 0; i < Math.min(4, this.dimensions) && i < semanticVector.length; i++) {
+          embedding[i] += semanticVector[i]! * 0.3; // Boost semantic dimensions
+        }
+        
+        // Add word-specific pattern to middle dimensions
+        const wordHash = this.hashString(word);
+        const startIdx = 4 + (wordHash % Math.max(1, this.dimensions - 8));
+        for (let i = 0; i < Math.min(4, this.dimensions - startIdx); i++) {
+          embedding[startIdx + i] += Math.sin((wordHash + i) * 0.02) * 0.2;
+        }
+      }
+    }
+    
+    // If we found semantic matches, boost the overall signal
+    if (semanticMatches > 0) {
+      const semanticBoost = Math.min(1.0, semanticMatches * 0.3);
+      for (let i = 0; i < Math.min(8, this.dimensions); i++) {
+        embedding[i] *= (1 + semanticBoost);
+      }
     }
     
     // Normalize the embedding
     const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
-    return embedding.map(val => val / magnitude);
+    return magnitude > 0 ? embedding.map(val => val / magnitude) : embedding;
   }
 
   private hashString(str: string): number {
