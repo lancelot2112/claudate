@@ -13,7 +13,7 @@ import {
   DocumentType,
   KnowledgeQuery
 } from '../../../src/types/Knowledge';
-import { AnthropicClient } from '../../../src/integrations/ai/AnthropicClient';
+import { OllamaRAGAdapter } from '../../../src/integrations/ai/OllamaRAGAdapter';
 
 describe('Knowledge Management Integration', () => {
   let vectorStore: VectorStore;
@@ -25,7 +25,7 @@ describe('Knowledge Management Integration', () => {
   let contextManager: ContextManager;
   let contextCompressor: ContextCompressor;
   let knowledgeCoordinator: KnowledgeCoordinator;
-  let anthropicClient: AnthropicClient;
+  let ollamaAdapter: OllamaRAGAdapter;
 
   const testDocuments: Document[] = [
     {
@@ -80,16 +80,13 @@ describe('Knowledge Management Integration', () => {
 
   beforeAll(async () => {
     // Initialize AI client (mock for tests)
-    anthropicClient = new AnthropicClient({
-      apiKey: 'test-key',
-      model: 'claude-3-haiku-20240307'
-    });
+    ollamaAdapter = OllamaRAGAdapter.createQwen3Adapter();
 
     // Initialize stores
     vectorStore = new VectorStore({
       collectionName: 'test-collection',
-      embeddingProvider: 'openai',
-      openaiApiKey: process.env.OPENAI_API_KEY || 'test-key'
+      provider: 'chroma',
+      dimensions: 1536
     });
 
     relationalStore = new RelationalStore({
@@ -107,18 +104,30 @@ describe('Knowledge Management Integration', () => {
     });
 
     // Initialize knowledge components
-    ingestionPipeline = new IngestionPipeline();
+    ingestionPipeline = new IngestionPipeline({}, vectorStore, relationalStore);
     
-    semanticSearch = new SemanticSearchEngine({
-      embeddingProvider: 'openai',
-      openaiApiKey: process.env.OPENAI_API_KEY || 'test-key'
-    });
+    const { MockEmbeddingProvider } = await import('../../../src/knowledge/search/SemanticSearch');
+    const embeddingProvider = new MockEmbeddingProvider(1536);
+    semanticSearch = new SemanticSearchEngine(
+      vectorStore,
+      embeddingProvider,
+      relationalStore,
+      {}
+    );
 
-    ragSystem = new RAGSystem({
-      maxContextLength: 4000,
-      maxDocuments: 5,
-      temperature: 0.7
-    }, anthropicClient);
+    ragSystem = new RAGSystem(
+      semanticSearch,
+      [{
+        name: 'ollama-qwen3',
+        client: ollamaAdapter,
+        priority: 1,
+        maxContextLength: 4000
+      }],
+      {
+        maxContextLength: 4000,
+        retrievalStrategy: 'similarity'
+      }
+    );
 
     contextManager = new ContextManager({
       hot: { storage: 'redis', ttl: 3600, maxSize: 1024000, compressionThreshold: 10240 },
@@ -126,12 +135,7 @@ describe('Knowledge Management Integration', () => {
       cold: { storage: 'postgresql', compressionEnabled: true }
     });
 
-    contextCompressor = new ContextCompressor({
-      maxInputLength: 10000,
-      targetCompressionRatio: 0.4,
-      useSemanticCompression: false, // Use statistical for tests
-      enableSummarization: true
-    }, anthropicClient);
+    contextCompressor = new ContextCompressor(ollamaAdapter);
 
     knowledgeCoordinator = new KnowledgeCoordinator({
       defaultStoreWeights: { vector: 0.5, relational: 0.3, graph: 0.2 },
@@ -158,8 +162,8 @@ describe('Knowledge Management Integration', () => {
     });
 
     // Set stores in other components
-    ingestionPipeline.setStores(vectorStore, relationalStore, graphStore);
-    semanticSearch.setVectorStore(vectorStore);
+    ingestionPipeline.setVectorStore(vectorStore);
+    ingestionPipeline.setRelationalStore(relationalStore);
   }, 30000);
 
   afterAll(async () => {
@@ -187,6 +191,9 @@ describe('Knowledge Management Integration', () => {
   describe('Document Ingestion Pipeline', () => {
     it('should ingest documents into all stores', async () => {
       const doc = testDocuments[0];
+      if (!doc) {
+        throw new Error('Test document not found');
+      }
       const docBuffer = Buffer.from(doc.content, 'utf-8');
       
       const jobId = await ingestionPipeline.ingestDocument(
@@ -360,7 +367,7 @@ describe('Knowledge Management Integration', () => {
       const response = await ragSystem.askQuestion(
         'What are the key principles of database design?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       expect(response).toBeDefined();
@@ -374,13 +381,13 @@ describe('Knowledge Management Integration', () => {
       const firstResponse = await ragSystem.askQuestion(
         'What is machine learning?',
         [],
-        3
+        { maxSources: 3 }
       );
 
       const followUpResponse = await ragSystem.askQuestion(
         'How does it relate to neural networks?',
-        [{ role: 'assistant', content: firstResponse.answer }],
-        3
+        [{ role: 'assistant', content: firstResponse.answer, timestamp: new Date() }],
+        { maxSources: 3 }
       );
 
       expect(followUpResponse.answer).toBeDefined();

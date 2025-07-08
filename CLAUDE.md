@@ -96,6 +96,29 @@ const summary = await compressor.summarizeContext(text, {
 }
 ```
 
+## Testing Optimization
+
+The system includes comprehensive test optimization strategies for RAG and knowledge integration tests:
+
+### Performance Optimizations
+- **Fast Mode**: Reduced context windows and document limits for CI/CD
+- **Optimized Adapters**: Test-specific AI adapters with faster inference
+- **Environment Controls**: Skip resource-intensive tests when infrastructure unavailable
+- **Timeout Management**: Progressive timeout strategies for different test types
+
+### Test Configuration
+```bash
+# Environment variables for test optimization
+FAST_MODE=true              # Use minimal resources and timeouts
+SKIP_OLLAMA_TESTS=true     # Skip Ollama-dependent integration tests
+LOG_LEVEL=debug            # Enable detailed test logging
+```
+
+### Documentation
+- **RAG Test Optimization Guide**: `docs/testing/rag-test-optimization.md`
+- **Test Configuration**: `tests/integration/knowledge/test-config.ts`
+- **Optimized Components**: `src/integrations/ai/OllamaRAGAdapterOptimized.ts`
+
 ## Development Branches
 
 - The master local ai first branch is localai-master
@@ -111,8 +134,13 @@ npm run build        # Build for production
 npm run test         # Run all tests
 npm run test:unit    # Run unit tests only
 npm run test:e2e     # Run end-to-end tests
+npm run test:integration # Run integration tests
 npm run lint         # Lint TypeScript files
 npm run type-check   # TypeScript type checking
+
+# Test Optimization (for RAG and knowledge systems)
+FAST_MODE=true npm run test:integration  # Fast integration tests
+SKIP_OLLAMA_TESTS=true npm test          # Skip Ollama-dependent tests
 
 # Database
 npm run db:migrate   # Run database migrations

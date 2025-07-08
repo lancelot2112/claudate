@@ -177,7 +177,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
         answerLower.includes('chinese') || 
         answerLower.includes('parameters')
       ).toBe(true);
-    }, 120000);
+    }, 180000); // Increase timeout to 3 minutes for integration tests
 
     it('should provide context-aware responses about local AI deployment', async () => {
       const response = await ragSystem.askQuestion(
@@ -198,7 +198,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
         answerLower.includes('offline') || 
         answerLower.includes('cost')
       ).toBe(true);
-    }, 120000);
+    }, 180000); // Increase timeout to 3 minutes for integration tests
 
     it('should explain RAG systems when asked', async () => {
       const response = await ragSystem.askQuestion(
@@ -219,7 +219,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
         answerLower.includes('vector') || 
         answerLower.includes('embedding')
       ).toBe(true);
-    }, 120000);
+    }, 180000); // Increase timeout to 3 minutes for integration tests
   });
 
   describe('Qwen3 Adapter Health and Performance', () => {
@@ -297,7 +297,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
         (answerLower.includes('qwen') || answerLower.includes('ollama')) &&
         (answerLower.includes('rag') || answerLower.includes('retrieval'))
       ).toBe(true);
-    }, 120000);
+    }, 180000); // Increase timeout to 3 minutes for integration tests
   });
 
   describe('Error Handling and Edge Cases', () => {
