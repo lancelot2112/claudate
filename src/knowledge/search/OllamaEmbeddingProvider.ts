@@ -38,13 +38,13 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
         throw new Error(`Ollama embeddings API error: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as { embedding?: unknown };
       
       if (!data.embedding || !Array.isArray(data.embedding)) {
         throw new Error('Invalid embedding response from Ollama');
       }
 
-      return data.embedding;
+      return data.embedding as number[];
     } catch (error) {
       logger.error('Failed to generate Ollama embedding', {
         error: error instanceof Error ? error.message : String(error),
@@ -104,8 +104,8 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
       
       if (!response.ok) return false;
       
-      const data = await response.json();
-      return data.models?.some((model: any) => 
+      const data = await response.json() as { models?: Array<{ name: string }> };
+      return data.models?.some((model: { name: string }) => 
         model.name.includes('embed') || model.name.includes(this.model)
       ) || false;
     } catch (error) {

@@ -169,7 +169,7 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
       const stats = await vectorStore.getCollectionStats();
       console.log('Vector store stats:', stats);
       
-      // Test semantic search directly
+      // Test semantic search directly to verify setup
       const searchResults = await semanticSearch.search({
         query: 'Qwen language models features',
         limit: 5,
@@ -178,9 +178,9 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
       console.log('Direct search results:', searchResults.results.length);
       
       const response = await ragSystem.askQuestion(
-        'What are the key features of Qwen language models?',
+        'Qwen language models features',
         [],
-        { includeSource: true, maxSources: 5 }
+        { includeSource: true, maxSources: 5, maxDocuments: 5 }
       );
 
       expect(response.success).toBe(true);

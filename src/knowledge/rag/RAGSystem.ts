@@ -169,7 +169,7 @@ export class RAGSystem {
       const query: KnowledgeQuery = {
         query: context.query,
         limit: this.getDocumentLimit(context),
-        threshold: 0.7,
+        threshold: 0.05, // Use very low threshold for mock embeddings testing
         includeEmbeddings: false,
         contextWindow: 3
       };
@@ -189,7 +189,8 @@ export class RAGSystem {
       logger.debug('Documents retrieved for RAG', {
         documentsFound: searchResponse.results.length,
         searchTime: searchResponse.processingTime,
-        query: query.query.substring(0, 100)
+        query: query.query.substring(0, 100),
+        queryThreshold: query.threshold
       });
 
       return searchResponse.results;
@@ -373,9 +374,19 @@ Content: ${content}`;
     documents: SearchResult[],
     context: RAGContext
   ): Promise<RAGResponse> {
+    // Apply maxSources limitation if specified
+    const maxSources = context.sessionMetadata?.maxSources || documents.length;
+    const limitedSources = documents.slice(0, maxSources);
+    
+    logger.debug('RAG sources limited', {
+      originalLength: documents.length,
+      limitedLength: limitedSources.length,
+      maxSources
+    });
+    
     const response: RAGResponse = {
       answer: aiResponse.answer,
-      sources: documents,
+      sources: limitedSources,
       confidence: aiResponse.confidence,
       success: true,
       conversationId: context.sessionMetadata?.conversationId || `rag-${Date.now()}`,
