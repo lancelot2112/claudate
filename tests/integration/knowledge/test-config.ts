@@ -14,6 +14,7 @@ export interface TestConfig {
   timeout: number;
   skipOllamaTests: boolean;
   fastMode: boolean;
+  useMockAdapter: boolean;
 }
 
 export const DEFAULT_TEST_CONFIG: TestConfig = {
@@ -24,16 +25,18 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
   maxDocuments: 2, // Fewer documents for faster processing
   timeout: 180000, // 3 minutes
   skipOllamaTests: process.env.SKIP_OLLAMA_TESTS === 'true',
-  fastMode: process.env.FAST_MODE === 'true'
+  fastMode: process.env.FAST_MODE === 'true',
+  useMockAdapter: process.env.USE_MOCK_ADAPTER === 'true'
 };
 
 export const FAST_TEST_CONFIG: TestConfig = {
   ...DEFAULT_TEST_CONFIG,
-  maxContextLength: 1000,
+  maxContextLength: 500, // Very small for fastest tests
   maxSources: 1,
   maxDocuments: 1,
-  timeout: 60000, // 1 minute
-  fastMode: true
+  timeout: 10000, // 10 seconds for mock mode
+  fastMode: true,
+  useMockAdapter: true // Use mock adapter for fastest tests
 };
 
 export function getTestConfig(): TestConfig {

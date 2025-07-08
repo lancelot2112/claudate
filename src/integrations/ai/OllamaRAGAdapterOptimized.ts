@@ -72,21 +72,33 @@ export class OllamaRAGAdapterOptimized implements AIProvider {
           description: optimizedRequest.messages[0]?.content || '',
           temperature: optimizedRequest.temperature,
           format: 'text',
-          maxTokens: optimizedRequest.maxTokens
+          maxTokens: optimizedRequest.maxTokens,
+          disableThinking: true // Disable thinking for faster test responses
         },
         timestamp: new Date(),
         metadata: {
           testMode: true,
           streamingEnabled: request.stream || false
         },
-        conversationHistory: optimizedRequest.messages.map(msg => ({
-          id: `msg-${Date.now()}-${Math.random()}`,
-          timestamp: new Date(),
-          type: 'text' as const,
-          urgency: 'normal' as const,
-          content: msg.content,
-          sender: msg.role === 'user' ? 'user' : 'assistant'
-        })),
+        conversationHistory: [
+          // Add system message for test optimization
+          {
+            id: `sys-${Date.now()}`,
+            timestamp: new Date(),
+            type: 'text' as const,
+            urgency: 'normal' as const,
+            content: 'Provide direct, concise answers without thinking aloud. Focus on factual information from the provided context.',
+            sender: 'system'
+          },
+          ...optimizedRequest.messages.map(msg => ({
+            id: `msg-${Date.now()}-${Math.random()}`,
+            timestamp: new Date(),
+            type: 'text' as const,
+            urgency: 'normal' as const,
+            content: msg.content,
+            sender: msg.role === 'user' ? 'user' : 'assistant'
+          }))
+        ],
         contextWindow: 2000, // Reduced for faster processing
         recentDecisions: [],
         activeProjects: [],
