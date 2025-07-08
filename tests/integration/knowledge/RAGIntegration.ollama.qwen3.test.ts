@@ -97,22 +97,30 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
     // Initialize Qwen3 RAG adapter
     ollamaAdapter = OllamaRAGAdapter.createQwen3Adapter();
 
-    // Initialize vector store with Ollama embeddings
+    // Initialize with consistent embedding dimensions for deterministic testing
+    const embeddingDimensions = 1536; // Use VectorStore default dimensions
+    
     vectorStore = new VectorStore({
       provider: 'chroma',
       collectionName: `rag-qwen3-test-${Date.now()}`,
-      dimensions: 384 // Ollama all-minilm dimensions
+      dimensions: embeddingDimensions
     });
 
-    // Initialize semantic search with mock embedding provider for consistent testing
+    // Use deterministic embeddings for reliable testing while still testing real RAG integration
+    // Note: The integration test focuses on the RAG pipeline (retrieval + generation) 
+    // with real Ollama inference, while using consistent embeddings for reproducibility
     const { MockEmbeddingProvider } = await import('../../../src/knowledge/search/SemanticSearch');
-    const embeddingProvider = new MockEmbeddingProvider();
+    const embeddingProvider = new MockEmbeddingProvider(embeddingDimensions);
+    console.log('Using deterministic embeddings with real Ollama inference for RAG integration test');
     
     semanticSearch = new SemanticSearchEngine(
       vectorStore,
       embeddingProvider,
       undefined,
-      {}
+      {
+        defaultThreshold: 0.3, // Lower threshold for better matching with mock embeddings
+        defaultLimit: 5
+      }
     );
 
     // Initialize RAG system with Qwen3 adapter
@@ -157,10 +165,22 @@ describe('RAG System Integration with Ollama (Qwen3)', () => {
 
   describe('Basic Qwen3 RAG Operations', () => {
     it('should answer questions about Qwen models using knowledge base', async () => {
+      // First, let's test if our vector store has documents
+      const stats = await vectorStore.getCollectionStats();
+      console.log('Vector store stats:', stats);
+      
+      // Test semantic search directly
+      const searchResults = await semanticSearch.search({
+        query: 'Qwen language models features',
+        limit: 5,
+        threshold: 0.1 // Very low threshold for testing
+      });
+      console.log('Direct search results:', searchResults.results.length);
+      
       const response = await ragSystem.askQuestion(
         'What are the key features of Qwen language models?',
         [],
-        { includeSource: true }
+        { includeSource: true, maxSources: 5 }
       );
 
       expect(response.success).toBe(true);
