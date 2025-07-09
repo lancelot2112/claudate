@@ -200,7 +200,18 @@ export class InteractiveElementBuilder {
           (filteredUpdates as any)[key] = value;
         }
       }
-      this.elements[index] = { ...this.elements[index], ...filteredUpdates };
+      const existingElement = this.elements[index];
+      if (existingElement) {
+        this.elements[index] = { 
+          ...existingElement, 
+          ...filteredUpdates,
+          // Ensure required properties are never undefined
+          type: filteredUpdates.type || existingElement.type,
+          id: filteredUpdates.id || existingElement.id,
+          label: filteredUpdates.label || existingElement.label,
+          action: filteredUpdates.action || existingElement.action,
+        };
+      }
     }
     return this;
   }

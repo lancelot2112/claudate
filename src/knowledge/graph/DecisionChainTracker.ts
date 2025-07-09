@@ -580,7 +580,8 @@ export class DecisionChainTracker extends EventEmitter {
       const curr = sortedDecisions[i];
       
       // Check if current decision depends on previous
-      if (!curr.context.relatedDecisions.includes(prev.id) && 
+      if (prev && curr && 
+          !curr.context.relatedDecisions.includes(prev.id) && 
           !curr.context.dependencies.some(dep => prev.context.dependencies.includes(dep))) {
         isSequential = false;
         break;
@@ -613,8 +614,8 @@ export class DecisionChainTracker extends EventEmitter {
     const priorityOrder = ['low', 'medium', 'high', 'critical'];
     
     for (let i = 1; i < sortedDecisions.length; i++) {
-      const prevPriority = priorityOrder.indexOf(sortedDecisions[i - 1].priority);
-      const currPriority = priorityOrder.indexOf(sortedDecisions[i].priority);
+      const prevPriority = priorityOrder.indexOf(sortedDecisions[i - 1]?.priority || 'low');
+      const currPriority = priorityOrder.indexOf(sortedDecisions[i]?.priority || 'low');
       
       if (currPriority <= prevPriority) {
         isEscalating = false;

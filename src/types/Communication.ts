@@ -139,6 +139,9 @@ export interface ChannelRouter {
 }
 
 export interface IChannelProvider {
+  readonly id: string;
+  readonly name: string;
+  
   initialize(): Promise<void>;
   shutdown(): Promise<void>;
   

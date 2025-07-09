@@ -729,8 +729,8 @@ export class UrgencyDetector extends EventEmitter {
     // For now, we'll simulate successful delivery
     
     try {
-      const template = stepConfig.template || this.getDefaultEscalationTemplate();
-      const _message = this.buildEscalationMessage(template, request, context, event);
+      const _template = stepConfig.template || this.getDefaultEscalationTemplate();
+      // const _message = this.buildEscalationMessage(template, request, context, event);
 
       // Simulate sending to each channel and recipient
       for (const channel of stepConfig.channels) {
@@ -755,7 +755,7 @@ export class UrgencyDetector extends EventEmitter {
     }
   }
 
-  private buildEscalationMessage(
+  private _buildEscalationMessage(
     template: string,
     request: MessageRequest,
     context: UrgencyContext,

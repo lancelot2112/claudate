@@ -422,12 +422,14 @@ export class ContentRouter extends EventEmitter {
 
     if (matchingRules.length > 0) {
       const rule = matchingRules[0];
-      return {
-        channel: rule.channels[0] || 'sms',
-        agent: 'personal-assistant', // Default agent
-        priority: rule.priority,
-        reasoning: `Matched routing rule: ${rule.name}`,
-      };
+      if (rule) {
+        return {
+          channel: rule.channels[0] || 'sms',
+          agent: 'personal-assistant', // Default agent
+          priority: rule.priority,
+          reasoning: `Matched routing rule: ${rule.name}`,
+        };
+      }
     }
 
     // Default routing based on content analysis
@@ -488,6 +490,8 @@ export class ContentRouter extends EventEmitter {
       id: `msg_${Date.now()}`,
       content: processedContent.content,
       timestamp: new Date(),
+      type: 'text' as any,  // TODO: Fix type mapping
+      urgency: (originalRequest.urgency || 'medium') as any,
       channel: routing.channel as any,  // TODO: Fix type conversion
       recipient: originalRequest.recipient,
       attachments: processedContent.attachments,

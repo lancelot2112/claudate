@@ -683,20 +683,20 @@ export class PreferenceLearningEngine extends EventEmitter {
       adaptedReasoning = `Adapted based on learned preferences (${improvement}% improvement)`;
       
       // Record adaptation factors
-      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.urgencyLevels?.[context.urgencyLevel] > 0.6) {
+      if ((profile.channelPreferences[adaptedChannel]?.contextualPreferences?.urgencyLevels?.[context.urgencyLevel] || 0) > 0.6) {
         adaptationFactors.push(`urgency-preference-${context.urgencyLevel}`);
       }
       
-      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.contentTypes?.[context.contentType] > 0.6) {
+      if ((profile.channelPreferences[adaptedChannel]?.contextualPreferences?.contentTypes?.[context.contentType] || 0) > 0.6) {
         adaptationFactors.push(`content-preference-${context.contentType}`);
       }
       
       const timeSlot = this.getTimeSlot(context.timeOfDay);
-      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.timeSlots?.[timeSlot] > 0.6) {
+      if ((profile.channelPreferences[adaptedChannel]?.contextualPreferences?.timeSlots?.[timeSlot] || 0) > 0.6) {
         adaptationFactors.push(`time-preference-${timeSlot}`);
       }
       
-      if (!context.businessHours && profile.channelPreferences[adaptedChannel]?.contextualPreferences?.businessHours?.afterHours > 0.6) {
+      if (!context.businessHours && (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.businessHours?.afterHours || 0) > 0.6) {
         adaptationFactors.push('after-hours-preference');
       }
     }
