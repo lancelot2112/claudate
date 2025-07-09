@@ -21,6 +21,7 @@ The system now uses a **generic OllamaAgent** architecture instead of model-spec
 - **Factory Methods**: Convenient creation methods for common model configurations
 
 ### Model Support
+- **Phi3 Models**: `phi3:mini` (recommended for fast testing)
 - **Qwen Models**: `qwen3:8b`, `qwen2.5-coder:7b`
 - **Llama Models**: `llama3.2:3b`, `llama3.2:1b`
 - **Code Models**: Any code-focused Ollama model
@@ -30,18 +31,20 @@ The system now uses a **generic OllamaAgent** architecture instead of model-spec
 ```typescript
 // Create a generic agent with any model
 const agent = new OllamaAgent({
-  modelName: 'qwen3:8b',
+  modelName: 'phi3:mini',
   name: 'my-agent',
   type: 'execution',
   capabilities: ['text_generation', 'reasoning']
 });
 
 // Use factory methods for common configurations
+const phi3Agent = OllamaAgent.createPhi3Agent(config);
 const qwen3Agent = OllamaAgent.createQwen3Agent(config);
 const codeAgent = OllamaAgent.createCodeAgent(config);
 
-// RAG integration
-const ragAdapter = OllamaRAGAdapter.createQwen3Adapter();
+// RAG integration (phi3:mini recommended for testing)
+const ragAdapter = OllamaRAGAdapter.createPhi3Adapter();
+const qwen3RagAdapter = OllamaRAGAdapter.createQwen3Adapter();
 ```
 
 ## Context Compression Architecture
@@ -96,11 +99,56 @@ const summary = await compressor.summarizeContext(text, {
 }
 ```
 
+## Real Embedding Integration
+
+The system uses authentic Ollama embeddings for semantic search and RAG systems:
+
+### Embedding Architecture
+- **OllamaEmbeddingProvider**: Real semantic embeddings via mxbai-embed-large:latest
+- **Unified Provider**: Same embedding model for document storage and query retrieval
+- **Dimension Consistency**: 1024-dimensional embeddings throughout pipeline
+- **Semantic Thresholds**: 0.3 threshold for real embeddings vs 0.05 for mock testing
+
+### VectorStore Integration
+```typescript
+// Initialize with real Ollama embeddings
+const embeddingProvider = new OllamaEmbeddingProvider(
+  'mxbai-embed-large:latest', 
+  1024,
+  'http://localhost:11434'
+);
+
+const vectorStore = new VectorStore({
+  provider: 'chroma',
+  collectionName: 'my-collection',
+  dimensions: 1024
+});
+
+// Set unified embedding provider
+vectorStore.setEmbeddingProvider(embeddingProvider);
+
+// Initialize semantic search
+const semanticSearch = new SemanticSearchEngine(
+  vectorStore,
+  embeddingProvider,
+  undefined,
+  { defaultThreshold: 0.3, defaultLimit: 5 }
+);
+```
+
+### Benefits
+- **Authentic Similarity**: Real semantic calculations vs mock limitations
+- **Natural Language**: Queries work with genuine language understanding
+- **Consistent Pipeline**: Same embeddings for storage and retrieval
+- **Performance**: Fast embedding generation with local models
+
 ## Testing Optimization
 
 The system includes comprehensive test optimization strategies for RAG and knowledge integration tests:
 
 ### Performance Optimizations
+- **Phi3:mini Models**: Fast inference for integration testing (10-20s vs 30+ seconds)
+- **Real Embeddings**: Authentic mxbai-embed-large embeddings for genuine testing
 - **Fast Mode**: Reduced context windows and document limits for CI/CD
 - **Optimized Adapters**: Test-specific AI adapters with faster inference
 - **Environment Controls**: Skip resource-intensive tests when infrastructure unavailable
@@ -153,9 +201,11 @@ npm run agents:stop  # Stop agent workers
 npm run agents:test  # Test agent functionality
 
 # Ollama (Local AI)
-ollama serve         # Start Ollama server
-ollama pull qwen3:8b # Pull required models
-ollama list          # List available models
+ollama serve              # Start Ollama server
+ollama pull phi3:mini     # Pull fast testing model (recommended)
+ollama pull qwen3:8b      # Pull reasoning model
+ollama pull mxbai-embed-large:latest  # Pull embedding model
+ollama list               # List available models
 
 # PyTorch Service (Hugging Face Models)
 cd pytorch-service   # Navigate to service directory

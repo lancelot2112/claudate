@@ -4,12 +4,20 @@ This guide provides strategies and tools for optimizing RAG (Retrieval-Augmented
 
 ## Problem Statement
 
-RAG integration tests often timeout due to:
-- Long inference times with local AI models (Ollama)
+RAG integration tests can be slow due to:
+- LLM inference times with large models (qwen3:8b takes 30+ seconds)
 - Large context windows requiring extensive processing
 - Multiple document retrieval and ranking operations
-- Network latency with embedding generation
+- Embedding generation for documents and queries
 - Complex multi-step RAG pipeline execution
+
+## Solutions Implemented
+
+### Fast Models and Real Embeddings
+- **Phi3:mini**: Fast inference model (10-20 seconds vs 30+ seconds)
+- **Real Ollama Embeddings**: Authentic mxbai-embed-large for genuine testing
+- **Unified Architecture**: Same embedding provider for storage and retrieval
+- **Optimized Thresholds**: 0.3 threshold for real embeddings vs mock limitations
 
 ## Optimization Strategies
 
@@ -46,43 +54,85 @@ const response = await ragSystem.askQuestion(
 );
 ```
 
-### 3. Optimized RAG Adapter
+### 3. Real Embeddings Integration
+
+Use authentic Ollama embeddings for genuine testing:
+
+```typescript
+import { OllamaEmbeddingProvider } from '../../../src/knowledge/search/OllamaEmbeddingProvider';
+
+// Initialize real embeddings
+const embeddingProvider = new OllamaEmbeddingProvider(
+  'mxbai-embed-large:latest', 
+  1024,
+  'http://localhost:11434'
+);
+
+// Set unified embedding provider
+vectorStore.setEmbeddingProvider(embeddingProvider);
+
+// Configure semantic search with real embeddings
+const semanticSearch = new SemanticSearchEngine(
+  vectorStore,
+  embeddingProvider,
+  undefined,
+  { defaultThreshold: 0.3, defaultLimit: 5 }
+);
+```
+
+### 4. Optimized RAG Adapter
 
 The `OllamaRAGAdapterOptimized` provides test-specific optimizations:
 
 ```typescript
 import { OllamaRAGAdapterOptimized } from '../../../src/integrations/ai/OllamaRAGAdapterOptimized';
 
-// Create optimized adapter for tests
-const adapter = OllamaRAGAdapterOptimized.createQwen3AdapterOptimized();
+// Create optimized adapter for tests (phi3:mini recommended)
+const adapter = OllamaRAGAdapterOptimized.createPhi3AdapterOptimized();
 
 // Includes:
-// - Reduced context windows (2000 vs 8000 tokens)
+// - Fast phi3:mini model (10-20s vs 30+ seconds)
 // - Lower temperature (0.1) for deterministic responses
-// - Shorter timeouts (15s vs 30s)
+// - Reduced max tokens (512) for faster generation
 // - Streaming support for faster feedback
 // - Test-specific metadata
 ```
 
 ## Performance Optimizations Applied
 
-| **Parameter** | **Standard** | **Optimized** | **Performance Gain** |
-|---------------|--------------|---------------|---------------------|
-| Context Length | 8000 tokens | 2000 tokens | 4x faster processing |
-| Max Sources | 5 | 2 | 2.5x faster retrieval |
-| Max Documents | 5 | 2 | 2.5x faster processing |
+| **Parameter** | **Standard (Qwen3)** | **Optimized (Phi3)** | **Performance Gain** |
+|---------------|----------------------|----------------------|---------------------|
+| Model | qwen3:8b | phi3:mini | 50% faster inference |
+| Inference Time | 30+ seconds | 10-20 seconds | 2-3x faster |
+| Embeddings | Mock/Random | Real Ollama | Authentic testing |
+| Embedding Dims | 1536 (mixed) | 1024 (consistent) | Unified pipeline |
+| Threshold | 0.05-0.7 (inconsistent) | 0.3 (optimized) | Better matching |
+| Context Length | 8000 tokens | 8000 tokens | Same quality |
 | Temperature | 0.7 | 0.1 | More deterministic |
 | Max Tokens | 2000 | 512 | 4x faster generation |
-| Timeout | 120s | 180s | More realistic |
-| Test Setup | 60s | 30s | 2x faster initialization |
+| Setup Time | Variable | 10-15 seconds | Predictable |
 
 ## Test Types and Strategies
 
 ### 1. Unit Tests (Fastest)
 - Use mocked providers
-- No actual AI inference
+- No actual AI inference  
 - Focus on logic and data flow
 - Execution time: < 1 second
+
+### 2. Integration Tests with Real Embeddings (Recommended)
+- Use real Ollama embeddings (mxbai-embed-large)
+- Phi3:mini for fast LLM inference
+- Authentic semantic search testing
+- Execution time: 10-20 seconds per question
+- Benefits: Genuine testing without mock limitations
+
+### 3. Full Integration Tests (Comprehensive)
+- Real embeddings + larger models (qwen3:8b)
+- Complete RAG pipeline testing
+- Multi-turn conversations and edge cases
+- Execution time: 30+ seconds per question
+- Benefits: Production-like testing
 
 ```typescript
 // Mock the RAG adapter for unit tests
