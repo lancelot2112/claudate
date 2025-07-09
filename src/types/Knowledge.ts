@@ -23,6 +23,25 @@ export interface DocumentChunk {
   metadata: ChunkMetadata;
 }
 
+export interface KnowledgeEntry {
+  id: string;
+  type: 'document' | 'conversation' | 'insight' | 'decision' | 'context';
+  content: string;
+  source: string;
+  metadata: KnowledgeEntryMetadata;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface KnowledgeEntryMetadata {
+  author?: string;
+  tags: string[];
+  confidence?: number;
+  relevance?: number;
+  context?: string;
+  [key: string]: any;
+}
+
 export interface DocumentMetadata {
   author?: string;
   tags: string[];

@@ -306,6 +306,26 @@ export class PersonalAssistantAgent extends BaseAgent {
       ],
       urgency,
       actionItems: [`Review ${intent} request`, 'Provide response within SLA'],
+      sections: [
+        {
+          id: 'overview',
+          title: 'Overview',
+          content: message.content,
+          type: 'summary',
+          priority: 1
+        }
+      ],
+      actions: [
+        {
+          id: 'review_action',
+          title: `Review ${intent} request`,
+          description: 'Analyze and process the incoming request',
+          priority: urgency,
+          status: 'pending'
+        }
+      ],
+      priority: urgency,
+      timestamp: new Date(),
       metadata: {
         messageId: message.id,
         channel: message.channel,
@@ -330,6 +350,33 @@ export class PersonalAssistantAgent extends BaseAgent {
       ],
       urgency: 'normal' as UrgencyLevel,
       actionItems: ['Review summary', 'Address urgent items'],
+      sections: [
+        {
+          id: 'summary',
+          title: 'Communication Summary',
+          content: `Analysis of ${messages.length} messages received during ${timeframe}`,
+          type: 'summary',
+          priority: 1
+        }
+      ],
+      actions: [
+        {
+          id: 'review_summary',
+          title: 'Review summary',
+          description: 'Review the generated executive summary',
+          priority: 'normal' as UrgencyLevel,
+          status: 'pending'
+        },
+        {
+          id: 'address_urgent',
+          title: 'Address urgent items',
+          description: 'Handle any urgent communications',
+          priority: 'high' as UrgencyLevel,
+          status: 'pending'
+        }
+      ],
+      priority: 'normal' as UrgencyLevel,
+      timestamp: new Date(),
     };
 
     task.output = brief;

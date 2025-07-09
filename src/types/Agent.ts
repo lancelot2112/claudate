@@ -150,6 +150,53 @@ export interface ExecutiveBrief {
   deadline?: Date;
   attachments?: string[];
   metadata?: Record<string, any>;
+  
+  // Missing properties for GoogleChatChannel
+  threadId?: string;
+  sections: BriefingSection[];
+  actions: ActionItem[];
+  priority: UrgencyLevel;
+  timestamp: Date;
+}
+
+export interface BriefingSection {
+  id: string;
+  title: string;
+  content: string;
+  type: 'summary' | 'metrics' | 'insights' | 'recommendations' | 'risks';
+  priority: number;
+  metrics?: BriefingMetric[];
+  chart?: BriefingChart;
+  metadata?: Record<string, any>;
+}
+
+export interface BriefingMetric {
+  name: string;
+  value: number | string;
+  unit?: string;
+  trend?: 'up' | 'down' | 'stable';
+  previousValue?: number | string;
+}
+
+export interface BriefingChart {
+  type: 'line' | 'bar' | 'pie' | 'gauge';
+  data: any[];
+  config?: Record<string, any>;
+  url?: string;
+}
+
+export interface ActionItem {
+  id: string;
+  title: string;
+  description: string;
+  priority: UrgencyLevel;
+  dueDate?: Date;
+  assignee?: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  label?: string;
+  actionId?: string;
+  parameters?: Record<string, any>;
+  metadata?: Record<string, any>;
 }
 
 export interface CommunicationPreference {

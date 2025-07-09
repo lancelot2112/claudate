@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { KnowledgeEntry } from '../types/Knowledge';
+import { KnowledgeEntry } from '../../types/Knowledge';
 import logger from '../../utils/logger';
 
 export interface QualityScore {
@@ -748,7 +748,7 @@ export class KnowledgeQualityScorer extends EventEmitter {
       };
     }
 
-    const previousScore = history[history.length - 1].overallScore;
+    const previousScore = history[history.length - 1]?.overallScore || 0;
     const changeRate = currentScore - previousScore;
     
     let direction: 'improving' | 'stable' | 'declining';
@@ -759,8 +759,8 @@ export class KnowledgeQualityScorer extends EventEmitter {
     // Find last improvement
     let lastImprovement = new Date();
     for (let i = history.length - 1; i > 0; i--) {
-      if (history[i].overallScore > history[i - 1].overallScore) {
-        lastImprovement = history[i].metadata.scoredAt;
+      if (history[i]?.overallScore > history[i - 1]?.overallScore) {
+        lastImprovement = history[i]?.metadata?.scoredAt || new Date();
         break;
       }
     }
@@ -993,12 +993,12 @@ export class KnowledgeQualityScorer extends EventEmitter {
 
   private async checkDomainRelevance(entry: KnowledgeEntry): Promise<number> {
     // Check relevance to domain based on keywords
-    const domainKeywords = entry.tags || [];
+    const domainKeywords = entry.metadata.tags || [];
     const contentWords = entry.content.toLowerCase().split(/\s+/);
     
     if (domainKeywords.length === 0) return 0.7;
     
-    const relevantWords = domainKeywords.filter(keyword => 
+    const relevantWords = domainKeywords.filter((keyword: string) => 
       contentWords.some(word => word.includes(keyword.toLowerCase()))
     );
     

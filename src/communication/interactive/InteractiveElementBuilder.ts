@@ -59,8 +59,8 @@ export class InteractiveElementBuilder {
       type: 'button',
       id: `btn_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       label: config.label,
-      actionId: config.actionId,
-      style: config.style,
+      action: { type: 'postback', value: config.actionId },
+      style: { variant: config.style as any },
       parameters: config.parameters,
       disabled: config.disabled || false,
       metadata: {
@@ -81,7 +81,7 @@ export class InteractiveElementBuilder {
       type: 'dropdown',
       id: `dd_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       label: config.label,
-      actionId: config.actionId,
+      action: { type: 'postback', value: config.actionId },
       options: config.options,
       parameters: config.parameters,
       metadata: {
@@ -103,13 +103,13 @@ export class InteractiveElementBuilder {
       type: 'input',
       id: `inp_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       label: config.label,
-      actionId: config.actionId,
-      inputType: config.type,
+      action: { type: 'postback', value: config.actionId },
       parameters: config.parameters,
       metadata: {
         placeholder: config.placeholder,
         required: config.required || false,
         validation: config.validation,
+        inputType: config.type,
         createdAt: new Date().toISOString(),
       },
     };
@@ -123,12 +123,13 @@ export class InteractiveElementBuilder {
    */
   addText(text: string, style: 'normal' | 'bold' | 'italic' | 'code' = 'normal'): InteractiveElementBuilder {
     const textElement: InteractiveElement = {
-      type: 'text',
+      type: 'card',
       id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       label: text,
-      actionId: '', // Text elements don't have actions
+      action: { type: 'postback', value: '' }, // Text elements don't have actions
       metadata: {
         style,
+        isTextOnly: true,
         createdAt: new Date().toISOString(),
       },
     };
@@ -142,11 +143,12 @@ export class InteractiveElementBuilder {
    */
   addDivider(): InteractiveElementBuilder {
     const divider: InteractiveElement = {
-      type: 'divider',
+      type: 'card',
       id: `div_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
       label: '',
-      actionId: '',
+      action: { type: 'postback', value: '' },
       metadata: {
+        isDivider: true,
         createdAt: new Date().toISOString(),
       },
     };
@@ -440,32 +442,31 @@ export class InteractiveActionHandler {
    * Handle an interactive action
    */
   async handleAction(action: InteractiveAction): Promise<any> {
-    const handler = this.handlers.get(action.actionId);
+    const handler = this.handlers.get(action.value);
     
     if (!handler) {
-      logger.warn('No handler found for interactive action', { actionId: action.actionId });
-      throw new Error(`No handler registered for action: ${action.actionId}`);
+      logger.warn('No handler found for interactive action', { actionValue: action.value });
+      throw new Error(`No handler registered for action: ${action.value}`);
     }
 
     try {
       logger.info('Handling interactive action', {
-        actionId: action.actionId,
-        userId: action.userId,
+        actionValue: action.value,
+        type: action.type,
         parameters: action.parameters,
       });
 
       const result = await handler(action);
       
       logger.info('Interactive action handled successfully', {
-        actionId: action.actionId,
-        userId: action.userId,
+        actionValue: action.value,
+        type: action.type,
       });
 
       return result;
     } catch (error) {
       logger.error('Interactive action handling failed', {
-        actionId: action.actionId,
-        userId: action.userId,
+        actionValue: action.value,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

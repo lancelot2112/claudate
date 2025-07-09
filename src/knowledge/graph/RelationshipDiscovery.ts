@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { KnowledgeEntry } from '../types/Knowledge';
+import { KnowledgeEntry } from '../../types/Knowledge';
 import logger from '../../utils/logger';
 
 export interface KnowledgeEntity {

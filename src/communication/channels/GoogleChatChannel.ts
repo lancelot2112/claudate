@@ -5,12 +5,14 @@ import {
   MessageRequest, 
   MessageResponse, 
   MediaAttachment,
-  ExecutiveBrief,
   InteractiveElement
 } from '../../types/Communication';
+import { ExecutiveBrief } from '../../types/Agent';
 import logger from '../../utils/logger';
 
 export interface GoogleChatConfig {
+  id?: string;
+  name?: string;
   serviceAccountKey: string; // Path to service account key file
   space: string; // Google Chat space ID
   botUserId: string; // Bot user ID for authentication
@@ -61,22 +63,32 @@ export interface GoogleChatMessage {
 }
 
 export class GoogleChatChannel implements CommunicationChannel {
+  public readonly id: string;
+  public readonly name: string;
   public readonly type = 'google_chat';
-  public readonly capabilities = {
-    text: true,
-    media: true,
-    voice: false,
-    video: false,
-    interactive: true,
-    richFormatting: true,
-    fileAttachments: true,
-    threading: true,
+  public readonly isActive: boolean = true;
+  public readonly capabilities: import('../../types/Communication').ChannelCapability[] = [
+    'text_messaging',
+    'media_messaging',
+    'file_sharing',
+    'rich_formatting',
+    'interactive_elements'
+  ];
+  public readonly rateLimits: import('../../types/Communication').RateLimit = {
+    maxPerMinute: 60,
+    maxPerHour: 3600,
+    maxPerDay: 86400,
+    burstLimit: 10
   };
+  public readonly configuration: Record<string, any> = {};
 
   private chatApi: any;
   private jwtClient: JWT;
 
   constructor(private config: GoogleChatConfig) {
+    this.id = config.id || `google_chat_${Date.now()}`;
+    this.name = config.name || 'Google Chat Channel';
+    
     this.jwtClient = new JWT({
       keyFile: config.serviceAccountKey,
       scopes: ['https://www.googleapis.com/auth/chat.bot'],
@@ -127,6 +139,7 @@ export class GoogleChatChannel implements CommunicationChannel {
       });
 
       return {
+        messageId: `error_${Date.now()}`,
         success: false,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date(),
@@ -167,6 +180,7 @@ export class GoogleChatChannel implements CommunicationChannel {
       });
 
       return {
+        messageId: `error_${Date.now()}`,
         success: false,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date(),
@@ -213,6 +227,7 @@ export class GoogleChatChannel implements CommunicationChannel {
       });
 
       return {
+        messageId: `error_${Date.now()}`,
         success: false,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date(),
@@ -341,10 +356,10 @@ export class GoogleChatChannel implements CommunicationChannel {
     if (brief.actions && brief.actions.length > 0) {
       const actionWidgets = brief.actions.map(action => ({
         textButton: {
-          text: action.label,
+          text: action.label || action.title,
           onClick: {
             action: {
-              actionMethodName: action.actionId,
+              actionMethodName: action.actionId || action.id,
               parameters: action.parameters || {},
             },
           },
@@ -440,10 +455,10 @@ export class GoogleChatChannel implements CommunicationChannel {
     // This would implement uploading attachments to Google Drive
     // for inclusion in Google Chat messages
     try {
-      const drive = google.drive({
-        version: 'v3',
-        auth: this.jwtClient,
-      });
+      // const drive = google.drive({
+      //   version: 'v3',
+      //   auth: this.jwtClient,
+      // }); // Unused for now
 
       // Implementation would upload file and return Drive file ID
       // This is a placeholder for the actual implementation

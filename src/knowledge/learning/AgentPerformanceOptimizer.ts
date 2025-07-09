@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events';
-import { Agent } from '../../agents/types/Agent';
 import logger from '../../utils/logger';
 
 export interface PerformanceMetrics {
@@ -153,8 +152,8 @@ export class AgentPerformanceOptimizer extends EventEmitter {
   private baselines: Map<string, PerformanceBaseline> = new Map();
   private workloadBalancer: Map<string, WorkloadBalance> = new Map();
   
-  private readonly PERFORMANCE_WINDOW = 24 * 60 * 60 * 1000; // 24 hours
-  private readonly OPTIMIZATION_THRESHOLD = 0.8; // Trigger optimization below 80%
+  private readonly _PERFORMANCE_WINDOW = 24 * 60 * 60 * 1000; // 24 hours
+  private readonly _OPTIMIZATION_THRESHOLD = 0.8; // Trigger optimization below 80%
   private readonly MAX_HISTORY_SIZE = 100;
 
   constructor() {

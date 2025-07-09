@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
+const DailyRotateFile = require('winston-daily-rotate-file');
 import { config } from './config';
 
 // Define log levels

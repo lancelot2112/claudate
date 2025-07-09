@@ -274,8 +274,8 @@ export class CrossProjectLearning extends EventEmitter {
   private projectContexts: Map<string, ProjectContext> = new Map();
   
   private readonly SIMILARITY_THRESHOLD = 0.7;
-  private readonly CONFIDENCE_THRESHOLD = 0.6;
-  private readonly MAX_INSIGHTS_PER_PROJECT = 50;
+  private readonly _CONFIDENCE_THRESHOLD = 0.6;
+  private readonly _MAX_INSIGHTS_PER_PROJECT = 50;
 
   constructor() {
     super();
@@ -1287,7 +1287,10 @@ export class CrossProjectLearning extends EventEmitter {
         description: 'Adaptation rule for cross-project learning',
         sourceContext: learning.sourceProjectId,
         targetContext: learning.targetProjectId,
-        adaptations: learning.adaptations,
+        adaptations: {
+          ...learning.adaptations,
+          team: learning.adaptations.team || [],
+        },
         confidence: 0.7,
         examples: [learning.id],
         updatedAt: new Date(),

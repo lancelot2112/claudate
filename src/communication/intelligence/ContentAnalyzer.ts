@@ -200,7 +200,7 @@ export class ContentAnalyzer extends EventEmitter {
 
   private async analyzeBasicContent(request: MessageRequest): Promise<ContentAnalysisResult['content']> {
     const text = request.content || '';
-    const hasAttachments = (request.attachments?.length || 0) > 0;
+    // const hasAttachments = (request.attachments?.length || 0) > 0; // Unused for now
     const hasVoice = request.attachments?.some(a => a.type === 'audio') || false;
     const hasVideo = request.attachments?.some(a => a.type === 'video') || false;
 
@@ -615,8 +615,8 @@ export class ContentAnalyzer extends EventEmitter {
     const sortedChannels = Object.entries(channelScores)
       .sort(([, a], [, b]) => b.score - a.score);
 
-    const [bestChannel, bestScore] = sortedChannels[0];
-    const confidence = Math.min(1.0, bestScore.score / 100);
+    const [bestChannel, bestScore] = sortedChannels[0] || ['email', { score: 0, reasons: [] }];
+    const confidence = Math.min(1.0, (bestScore?.score || 0) / 100);
 
     // Create fallback list
     const fallbackChannels = sortedChannels
@@ -644,24 +644,24 @@ export class ContentAnalyzer extends EventEmitter {
   ): void {
     switch (urgency.level) {
       case 'critical':
-        channelScores['sms'].score += 40;
-        channelScores['sms'].reasons.push('Critical urgency requires immediate SMS delivery');
+        channelScores['sms']?.score && (channelScores['sms'].score += 40);
+        channelScores['sms']?.reasons?.push('Critical urgency requires immediate SMS delivery');
         break;
       case 'high':
-        channelScores['sms'].score += 30;
-        channelScores['google_chat'].score += 25;
-        channelScores['sms'].reasons.push('High urgency favors SMS');
-        channelScores['google_chat'].reasons.push('High urgency suitable for Google Chat');
+        channelScores['sms'] && (channelScores['sms'].score += 30);
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 25);
+        channelScores['sms']?.reasons?.push('High urgency favors SMS');
+        channelScores['google_chat']?.reasons?.push('High urgency suitable for Google Chat');
         break;
       case 'medium':
-        channelScores['google_chat'].score += 30;
-        channelScores['email'].score += 20;
-        channelScores['google_chat'].reasons.push('Medium urgency well-suited for Google Chat');
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 30);
+        channelScores['email'] && (channelScores['email'].score += 20);
+        channelScores['google_chat']?.reasons?.push('Medium urgency well-suited for Google Chat');
         break;
       case 'low':
-        channelScores['email'].score += 30;
-        channelScores['google_chat'].score += 20;
-        channelScores['email'].reasons.push('Low urgency appropriate for email');
+        channelScores['email'] && (channelScores['email'].score += 30);
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 20);
+        channelScores['email']?.reasons?.push('Low urgency appropriate for email');
         break;
     }
   }
@@ -672,43 +672,43 @@ export class ContentAnalyzer extends EventEmitter {
   ): void {
     switch (complexity.level) {
       case 'highly_complex':
-        channelScores['google_chat'].score += 40;
-        channelScores['email'].score += 35;
-        channelScores['google_chat'].reasons.push('High complexity requires rich formatting');
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 40);
+        channelScores['email'] && (channelScores['email'].score += 35);
+        channelScores['google_chat']?.reasons?.push('High complexity requires rich formatting');
         break;
       case 'complex':
-        channelScores['google_chat'].score += 30;
-        channelScores['email'].score += 25;
-        channelScores['google_chat'].reasons.push('Complex content benefits from Google Chat features');
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 30);
+        channelScores['email'] && (channelScores['email'].score += 25);
+        channelScores['google_chat']?.reasons?.push('Complex content benefits from Google Chat features');
         break;
       case 'moderate':
-        channelScores['google_chat'].score += 20;
-        channelScores['mms'].score += 15;
-        channelScores['sms'].score += 10;
+        channelScores['google_chat'] && (channelScores['google_chat'].score += 20);
+        channelScores['mms'] && (channelScores['mms'].score += 15);
+        channelScores['sms'] && (channelScores['sms'].score += 10);
         break;
       case 'simple':
-        channelScores['sms'].score += 30;
-        channelScores['mms'].score += 20;
-        channelScores['sms'].reasons.push('Simple content perfect for SMS');
+        channelScores['sms'] && (channelScores['sms'].score += 30);
+        channelScores['mms'] && (channelScores['mms'].score += 20);
+        channelScores['sms']?.reasons?.push('Simple content perfect for SMS');
         break;
     }
 
     // Factor-specific adjustments
     if (complexity.factors.dataVisualization > 50) {
-      channelScores['google_chat'].score += 25;
-      channelScores['email'].score += 20;
-      channelScores['google_chat'].reasons.push('Data visualization requires rich media support');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 25);
+      channelScores['email'] && (channelScores['email'].score += 20);
+      channelScores['google_chat']?.reasons?.push('Data visualization requires rich media support');
     }
 
     if (complexity.factors.interactiveElements > 50) {
-      channelScores['google_chat'].score += 30;
-      channelScores['google_chat'].reasons.push('Interactive elements require Google Chat');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 30);
+      channelScores['google_chat']?.reasons?.push('Interactive elements require Google Chat');
     }
 
     if (complexity.factors.multiModal > 50) {
-      channelScores['google_chat'].score += 25;
-      channelScores['email'].score += 15;
-      channelScores['google_chat'].reasons.push('Multi-modal content needs comprehensive platform');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 25);
+      channelScores['email'] && (channelScores['email'].score += 15);
+      channelScores['google_chat']?.reasons?.push('Multi-modal content needs comprehensive platform');
     }
   }
 
@@ -717,21 +717,21 @@ export class ContentAnalyzer extends EventEmitter {
     executiveLevel: ContentAnalysisResult['executiveLevel']
   ): void {
     if (executiveLevel.isExecutiveContent) {
-      channelScores['google_chat'].score += 25;
-      channelScores['email'].score += 20;
-      channelScores['google_chat'].reasons.push('Executive content benefits from professional presentation');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 25);
+      channelScores['email'] && (channelScores['email'].score += 20);
+      channelScores['google_chat']?.reasons?.push('Executive content benefits from professional presentation');
     }
 
     if (executiveLevel.decisionRequired) {
-      channelScores['google_chat'].score += 20;
-      channelScores['sms'].score += 15;
-      channelScores['google_chat'].reasons.push('Decision requirements need interactive capabilities');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 20);
+      channelScores['sms'] && (channelScores['sms'].score += 15);
+      channelScores['google_chat']?.reasons?.push('Decision requirements need interactive capabilities');
     }
 
     if (executiveLevel.briefingWorthy) {
-      channelScores['google_chat'].score += 15;
-      channelScores['email'].score += 10;
-      channelScores['google_chat'].reasons.push('Briefing-worthy content suits Google Chat format');
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 15);
+      channelScores['email'] && (channelScores['email'].score += 10);
+      channelScores['google_chat']?.reasons?.push('Briefing-worthy content suits Google Chat format');
     }
   }
 
@@ -753,9 +753,9 @@ export class ContentAnalyzer extends EventEmitter {
 
     // Role-based preferences
     if (userContext.role === 'executive' || userContext.role === 'ceo') {
-      channelScores['sms'].score += 15;
-      channelScores['google_chat'].score += 10;
-      channelScores['sms'].reasons.push('Executive role prefers immediate channels');
+      channelScores['sms'] && (channelScores['sms'].score += 15);
+      channelScores['google_chat'] && (channelScores['google_chat'].score += 10);
+      channelScores['sms']?.reasons?.push('Executive role prefers immediate channels');
     }
   }
 

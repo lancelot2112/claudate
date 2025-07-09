@@ -182,3 +182,58 @@ export interface BulkMessageJob {
     failed: number;
   };
 }
+
+// Missing types needed by GoogleChatChannel and other components
+export interface MessageRequest {
+  content: string;
+  recipient: string;
+  channelId: string;
+  metadata?: Record<string, any>;
+  attachments?: MediaAttachment[];
+  urgency?: UrgencyLevel;
+  scheduledDelivery?: Date;
+  threadId?: string;
+  interactiveElements?: InteractiveElement[];
+}
+
+export interface MessageResponse {
+  messageId: string;
+  success: boolean;
+  deliveryStatus: DeliveryStatus;
+  channelMessageId?: string;
+  error?: string;
+  timestamp: Date;
+  metadata?: Record<string, any>;
+}
+
+export interface InteractiveElement {
+  type: 'button' | 'select' | 'input' | 'card' | 'carousel' | 'dropdown';
+  id: string;
+  label: string;
+  action: InteractiveAction;
+  actionId?: string;
+  parameters?: Record<string, any>;
+  options?: InteractiveOption[];
+  style?: InteractiveStyle;
+  metadata?: Record<string, any>;
+}
+
+export interface InteractiveOption {
+  label: string;
+  value: string;
+  selected?: boolean;
+}
+
+export interface InteractiveAction {
+  type: 'postback' | 'url' | 'quick_reply' | 'submit';
+  value: string;
+  url?: string;
+  parameters?: Record<string, any>;
+}
+
+export interface InteractiveStyle {
+  color?: string;
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+  size?: 'small' | 'medium' | 'large';
+  icon?: string;
+}

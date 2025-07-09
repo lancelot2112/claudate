@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { MessageRequest, MessageResponse } from '../../types/Communication';
+// import { MessageRequest, MessageResponse } from '../../types/Communication';
 import logger from '../../utils/logger';
 
 export interface UserInteraction {
@@ -509,7 +509,7 @@ export class PreferenceLearningEngine extends EventEmitter {
 
   private updateContentPreferences(profile: UserPreferenceProfile, interaction: UserInteraction): void {
     const score = this.getInteractionScore(interaction);
-    const learningRate = profile.adaptationMetrics.learningRate;
+    // const _learningRate = profile.adaptationMetrics.learningRate;
 
     // Update preferences based on interaction success
     if (interaction.contentType === 'interactive' && score > 0.6) {
@@ -671,32 +671,32 @@ export class PreferenceLearningEngine extends EventEmitter {
     const bestChannel = Object.entries(channelScores)
       .sort(([, a], [, b]) => b - a)[0];
 
-    if (bestChannel && bestChannel[1] > channelScores[originalRecommendation.channel] + 0.1) {
+    if (bestChannel && bestChannel[1] > (channelScores[originalRecommendation.channel] || 0) + 0.1) {
       // Significant improvement found
       adaptedChannel = bestChannel[0];
       adaptedConfidence = Math.min(1.0, originalRecommendation.confidence + 0.1);
       
-      const originalScore = channelScores[originalRecommendation.channel];
+      const originalScore = channelScores[originalRecommendation.channel] || 0;
       const adaptedScore = bestChannel[1];
-      const improvement = ((adaptedScore - originalScore) / originalScore * 100).toFixed(1);
+      const improvement = originalScore > 0 ? ((adaptedScore - originalScore) / originalScore * 100).toFixed(1) : '0';
       
       adaptedReasoning = `Adapted based on learned preferences (${improvement}% improvement)`;
       
       // Record adaptation factors
-      if (profile.channelPreferences[adaptedChannel].contextualPreferences.urgencyLevels[context.urgencyLevel] > 0.6) {
+      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.urgencyLevels?.[context.urgencyLevel] > 0.6) {
         adaptationFactors.push(`urgency-preference-${context.urgencyLevel}`);
       }
       
-      if (profile.channelPreferences[adaptedChannel].contextualPreferences.contentTypes[context.contentType] > 0.6) {
+      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.contentTypes?.[context.contentType] > 0.6) {
         adaptationFactors.push(`content-preference-${context.contentType}`);
       }
       
       const timeSlot = this.getTimeSlot(context.timeOfDay);
-      if (profile.channelPreferences[adaptedChannel].contextualPreferences.timeSlots[timeSlot] > 0.6) {
+      if (profile.channelPreferences[adaptedChannel]?.contextualPreferences?.timeSlots?.[timeSlot] > 0.6) {
         adaptationFactors.push(`time-preference-${timeSlot}`);
       }
       
-      if (!context.businessHours && profile.channelPreferences[adaptedChannel].contextualPreferences.businessHours.afterHours > 0.6) {
+      if (!context.businessHours && profile.channelPreferences[adaptedChannel]?.contextualPreferences?.businessHours?.afterHours > 0.6) {
         adaptationFactors.push('after-hours-preference');
       }
     }

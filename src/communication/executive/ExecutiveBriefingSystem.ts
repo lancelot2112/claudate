@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { ChartGenerator } from '../../visual/charts/ChartGenerator';
-import { RealTimeDashboard } from '../../visual/dashboard/RealTimeDashboard';
+// import { RealTimeDashboard } from '../../visual/dashboard/RealTimeDashboard'; // Unused for now
 import { MediaAttachment } from '../../types/Communication';
 import logger from '../../utils/logger';
 
@@ -234,7 +234,7 @@ export class ExecutiveBriefingSystem extends EventEmitter {
     
     for (let i = 0; i < Math.min(maxBullets, prioritizedThemes.length); i++) {
       const theme = prioritizedThemes[i];
-      const bullet = this.createBulletFromTheme(theme, combinedContent);
+      const bullet = theme ? this.createBulletFromTheme(theme, combinedContent) : '';
       
       if (bullet && bullet.length > 0) {
         bulletPoints.push(bullet);
@@ -278,7 +278,7 @@ export class ExecutiveBriefingSystem extends EventEmitter {
           themes[themeName].frequency += matchCount;
           keywords.forEach(keyword => {
             if (lowerSentence.includes(keyword)) {
-              themes[themeName].keywords.add(keyword);
+              themes[themeName]?.keywords.add(keyword);
             }
           });
         }
@@ -386,8 +386,8 @@ export class ExecutiveBriefingSystem extends EventEmitter {
     const negativeCount = negativeWords.filter(word => combinedContent.includes(word)).length;
     
     // Analyze metric trends if available
-    const metricValues = Object.values(metrics).filter(v => typeof v === 'number');
-    const avgMetric = metricValues.length > 0 ? metricValues.reduce((a, b) => a + b, 0) / metricValues.length : 0;
+    // const metricValues = Object.values(metrics).filter(v => typeof v === 'number'); // Unused for now
+    // const avgMetric = metricValues.length > 0 ? metricValues.reduce((a, b) => a + b, 0) / metricValues.length : 0; // Unused for now
     
     let trend: 'positive' | 'negative' | 'stable' | 'mixed';
     let confidence = 0.7;
@@ -453,8 +453,8 @@ export class ExecutiveBriefingSystem extends EventEmitter {
     
     // Generate issue status indicators
     if (data.issues) {
-      const criticalIssues = data.issues.filter(i => i.severity === 'critical').length;
-      const highIssues = data.issues.filter(i => i.severity === 'high').length;
+      const criticalIssues = data.issues.filter((i: any) => i.severity === 'critical').length;
+      const highIssues = data.issues.filter((i: any) => i.severity === 'high').length;
       
       if (criticalIssues > 0) {
         statusIndicators.push({
@@ -509,7 +509,7 @@ export class ExecutiveBriefingSystem extends EventEmitter {
     for (const pattern of actionPatterns) {
       let match;
       while ((match = pattern.exec(combinedContent)) !== null) {
-        const description = match[1].trim();
+        const description = match[1]?.trim() || '';
         
         if (description.length > 5 && description.length < 200) {
           const urgency = this.determineUrgency(description);
@@ -558,7 +558,7 @@ export class ExecutiveBriefingSystem extends EventEmitter {
     for (const pattern of decisionPatterns) {
       let match;
       while ((match = pattern.exec(combinedContent)) !== null) {
-        const question = match[1].trim();
+        const question = match[1]?.trim() || '';
         
         if (question.length > 10 && question.length < 200) {
           decisionPoints.push({

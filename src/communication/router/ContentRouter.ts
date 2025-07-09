@@ -3,7 +3,7 @@ import {
   MessageRequest, 
   MessageResponse, 
   MediaAttachment,
-  CommunicationChannel 
+  IChannelProvider 
 } from '../../types/Communication';
 import { VoiceProcessor, TranscriptionResult } from '../processors/VoiceProcessor';
 import { InteractiveActionHandler } from '../interactive/InteractiveElementBuilder';
@@ -74,7 +74,7 @@ export interface ContentAnalysisResult {
 }
 
 export class ContentRouter extends EventEmitter {
-  private channels: Map<string, CommunicationChannel> = new Map();
+  private channels: Map<string, IChannelProvider> = new Map();
   private processors: Map<string, any> = new Map();
   private routingRules: Map<string, RoutingRule> = new Map();
   private voiceProcessor: VoiceProcessor;
@@ -218,6 +218,7 @@ export class ContentRouter extends EventEmitter {
       });
 
       return {
+        messageId: request.messageId || `error_${Date.now()}`,
         success: false,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date(),
@@ -483,9 +484,12 @@ export class ContentRouter extends EventEmitter {
     }
 
     // Prepare delivery request
-    const deliveryRequest: MessageRequest = {
-      ...originalRequest,
+    const channelMessage = {
+      id: originalRequest.messageId,
       content: processedContent.content,
+      timestamp: new Date(),
+      channel: routing.channel as any,  // TODO: Fix type conversion
+      recipient: originalRequest.recipient,
       attachments: processedContent.attachments,
       metadata: {
         ...originalRequest.metadata,
@@ -495,7 +499,17 @@ export class ContentRouter extends EventEmitter {
       },
     };
 
-    return await channel.sendMessage(deliveryRequest);
+    const deliveryResult = await channel.sendMessage(channelMessage);
+    
+    return {
+      messageId: originalRequest.messageId,
+      success: deliveryResult.success,
+      deliveryStatus: deliveryResult.deliveryStatus,
+      channelMessageId: deliveryResult.messageId,
+      error: deliveryResult.error,
+      timestamp: new Date(),
+      metadata: deliveryResult.metadata,
+    };
   }
 
   private analyzeUrgency(text: string): 'low' | 'medium' | 'high' | 'critical' {
@@ -649,17 +663,17 @@ export class ContentRouter extends EventEmitter {
   private setupDefaultActionHandlers(): void {
     // Register common interactive action handlers
     this.actionHandler.registerHandler('quick_approve', async (action) => {
-      logger.info('Quick approval action', { userId: action.userId, parameters: action.parameters });
+      logger.info('Quick approval action', { actionType: action.type, parameters: action.parameters });
       return { approved: true, timestamp: new Date() };
     });
 
     this.actionHandler.registerHandler('quick_reject', async (action) => {
-      logger.info('Quick rejection action', { userId: action.userId, parameters: action.parameters });
+      logger.info('Quick rejection action', { actionType: action.type, parameters: action.parameters });
       return { approved: false, timestamp: new Date() };
     });
 
     this.actionHandler.registerHandler('executive_proceed', async (action) => {
-      logger.info('Executive proceed action', { userId: action.userId, parameters: action.parameters });
+      logger.info('Executive proceed action', { actionType: action.type, parameters: action.parameters });
       return { decision: 'proceed', timestamp: new Date() };
     });
   }
