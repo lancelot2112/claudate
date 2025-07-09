@@ -5,7 +5,7 @@ import {
   MediaAttachment,
   IChannelProvider 
 } from '../../types/Communication';
-import { VoiceProcessor, TranscriptionResult } from '../processors/VoiceProcessor';
+import { VoiceProcessor } from '../processors/VoiceProcessor';
 import { InteractiveActionHandler } from '../interactive/InteractiveElementBuilder';
 import logger from '../../utils/logger';
 
@@ -104,11 +104,11 @@ export class ContentRouter extends EventEmitter {
   /**
    * Register a communication channel
    */
-  registerChannel(channel: CommunicationChannel): void {
-    this.channels.set(channel.type, channel);
+  registerChannel(channel: IChannelProvider): void {
+    this.channels.set(channel.id, channel);
     logger.info('Communication channel registered', {
-      type: channel.type,
-      capabilities: channel.capabilities,
+      id: channel.id,
+      capabilities: channel.getCapabilities(),
     });
   }
 
@@ -218,7 +218,7 @@ export class ContentRouter extends EventEmitter {
       });
 
       return {
-        messageId: request.messageId || `error_${Date.now()}`,
+        messageId: `error_${Date.now()}`,
         success: false,
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date(),
@@ -264,25 +264,25 @@ export class ContentRouter extends EventEmitter {
     if (request.attachments && request.attachments.length > 0) {
       const attachment = request.attachments[0];
       
-      if (attachment.type === 'audio' || attachment.mimeType.startsWith('audio/')) {
+      if (attachment && (attachment.type === 'audio' || attachment.mimeType.startsWith('audio/'))) {
         return {
           primary: 'voice',
           mimeType: attachment.mimeType,
           confidence: 0.95,
         };
-      } else if (attachment.type === 'video' || attachment.mimeType.startsWith('video/')) {
+      } else if (attachment && (attachment.type === 'video' || attachment.mimeType.startsWith('video/'))) {
         return {
           primary: 'video',
           mimeType: attachment.mimeType,
           confidence: 0.95,
         };
-      } else if (attachment.type === 'image' || attachment.mimeType.startsWith('image/')) {
+      } else if (attachment && (attachment.type === 'image' || attachment.mimeType.startsWith('image/'))) {
         return {
           primary: 'image',
           mimeType: attachment.mimeType,
           confidence: 0.95,
         };
-      } else if (attachment.type === 'chart') {
+      } else if (attachment && attachment.type === 'chart') {
         return {
           primary: 'image',
           secondary: 'chart',
@@ -485,7 +485,7 @@ export class ContentRouter extends EventEmitter {
 
     // Prepare delivery request
     const channelMessage = {
-      id: originalRequest.messageId,
+      id: `msg_${Date.now()}`,
       content: processedContent.content,
       timestamp: new Date(),
       channel: routing.channel as any,  // TODO: Fix type conversion
@@ -502,7 +502,7 @@ export class ContentRouter extends EventEmitter {
     const deliveryResult = await channel.sendMessage(channelMessage);
     
     return {
-      messageId: originalRequest.messageId,
+      messageId: channelMessage.id,
       success: deliveryResult.success,
       deliveryStatus: deliveryResult.deliveryStatus,
       channelMessageId: deliveryResult.messageId,

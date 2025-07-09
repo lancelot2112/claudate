@@ -62,9 +62,9 @@ export class InteractiveElementBuilder {
       action: { type: 'postback', value: config.actionId },
       style: { variant: config.style as any },
       parameters: config.parameters,
-      disabled: config.disabled || false,
       metadata: {
         icon: config.icon,
+        disabled: config.disabled || false,
         createdAt: new Date().toISOString(),
       },
     };
@@ -193,7 +193,14 @@ export class InteractiveElementBuilder {
   updateElement(id: string, updates: Partial<InteractiveElement>): InteractiveElementBuilder {
     const index = this.elements.findIndex(element => element.id === id);
     if (index !== -1) {
-      this.elements[index] = { ...this.elements[index], ...updates };
+      // Filter out undefined values to avoid type errors
+      const filteredUpdates: Partial<InteractiveElement> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        if (value !== undefined) {
+          (filteredUpdates as any)[key] = value;
+        }
+      }
+      this.elements[index] = { ...this.elements[index], ...filteredUpdates };
     }
     return this;
   }

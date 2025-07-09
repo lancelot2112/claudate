@@ -596,6 +596,11 @@ export class UrgencyDetector extends EventEmitter {
 
       const stepConfig = rule.escalationSteps[currentStep - 1];
       
+      if (!stepConfig) {
+        logger.warn('No escalation step configuration found', { ruleId: rule.id, currentStep });
+        return null;
+      }
+      
       const escalationEvent: EscalationEvent = {
         id: `escalation_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
         messageId: context.messageId,
@@ -725,7 +730,7 @@ export class UrgencyDetector extends EventEmitter {
     
     try {
       const template = stepConfig.template || this.getDefaultEscalationTemplate();
-      const message = this.buildEscalationMessage(template, request, context, event);
+      const _message = this.buildEscalationMessage(template, request, context, event);
 
       // Simulate sending to each channel and recipient
       for (const channel of stepConfig.channels) {
