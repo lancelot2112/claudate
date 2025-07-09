@@ -16,6 +16,7 @@ export class VectorStore implements IVectorStore {
   private collection: Collection | null = null;
   private config: VectorStoreConfig;
   private embeddingFunction: any;
+  private externalEmbeddingProvider?: any;
   private isInitialized = false;
 
   constructor(customConfig?: Partial<VectorStoreConfig>) {
@@ -36,8 +37,18 @@ export class VectorStore implements IVectorStore {
     // Initialize embedding function - create a simple dummy function for testing
     this.embeddingFunction = {
       generate: async (texts: string[]) => {
-        // Return dummy embeddings (1536 dimensions filled with random values)
-        return texts.map(() => Array(1536).fill(0).map(() => Math.random()));
+        if (this.externalEmbeddingProvider) {
+          // Use external embedding provider if available
+          const embeddings = [];
+          for (const text of texts) {
+            const embedding = await this.externalEmbeddingProvider.generateEmbedding(text);
+            embeddings.push(embedding);
+          }
+          return embeddings;
+        } else {
+          // Return dummy embeddings with configured dimensions
+          return texts.map(() => Array(this.config.dimensions).fill(0).map(() => Math.random()));
+        }
       }
     };
 
@@ -45,6 +56,11 @@ export class VectorStore implements IVectorStore {
       provider: this.config.provider,
       collection: this.config.collectionName 
     });
+  }
+
+  public setEmbeddingProvider(embeddingProvider: any): void {
+    this.externalEmbeddingProvider = embeddingProvider;
+    logger.info('External embedding provider set for VectorStore');
   }
 
   public async initialize(): Promise<void> {

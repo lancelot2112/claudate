@@ -31,7 +31,7 @@ export class OllamaRAGAdapterOptimized implements AIProvider {
       streaming: true, // Enable streaming for faster feedback
       functionCalling: false,
       localExecution: true,
-      supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b'],
+      supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b', 'phi3:mini'],
       maxContextWindow: agent.getMaxContextWindow()
     };
   }
@@ -42,6 +42,23 @@ export class OllamaRAGAdapterOptimized implements AIProvider {
   public static createQwen3AdapterOptimized(): OllamaRAGAdapterOptimized {
     const agent = OllamaAgent.createQwen3Agent({
       name: 'qwen3-rag-agent-optimized',
+      type: 'execution',
+      capabilities: ['text_generation', 'reasoning', 'analysis'],
+      enabled: true,
+      priority: 1,
+      maxConcurrentTasks: 2
+    });
+    
+    return new OllamaRAGAdapterOptimized(agent);
+  }
+
+  /**
+   * Create a test-optimized Phi3 adapter (faster)
+   */
+  public static createPhi3AdapterOptimized(): OllamaRAGAdapterOptimized {
+    const agent = new OllamaAgent({
+      modelName: 'phi3:mini',
+      name: 'phi3-rag-agent-optimized',
       type: 'execution',
       capabilities: ['text_generation', 'reasoning', 'analysis'],
       enabled: true,

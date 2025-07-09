@@ -94,7 +94,9 @@ export class MockEmbeddingProvider implements EmbeddingProvider {
     // Start with base hash-based embedding for determinism
     const baseHash = this.hashString(text);
     for (let i = 0; i < this.dimensions; i++) {
-      embedding[i] = Math.sin((baseHash + i) * 0.01) * 0.1; // Reduced magnitude for base
+      // Use even smaller magnitude for large dimensions to let semantic signals dominate
+      const baseMagnitude = this.dimensions > 500 ? 0.05 : 0.1;
+      embedding[i] = Math.sin((baseHash + i) * 0.01) * baseMagnitude;
     }
     
     // Add semantic components based on keywords
@@ -104,8 +106,10 @@ export class MockEmbeddingProvider implements EmbeddingProvider {
       if (semanticVector) {
         semanticMatches++;
         // Add semantic signal to first few dimensions
+        // Use stronger boost for large dimensions
+        const semanticBoost = this.dimensions > 500 ? 0.8 : 0.3;
         for (let i = 0; i < Math.min(4, this.dimensions) && i < semanticVector.length; i++) {
-          embedding[i] += semanticVector[i]! * 0.3; // Boost semantic dimensions
+          embedding[i] += semanticVector[i]! * semanticBoost;
         }
         
         // Add word-specific pattern to middle dimensions
@@ -119,8 +123,9 @@ export class MockEmbeddingProvider implements EmbeddingProvider {
     
     // If we found semantic matches, boost the overall signal
     if (semanticMatches > 0) {
-      const semanticBoost = Math.min(1.0, semanticMatches * 0.3);
-      for (let i = 0; i < Math.min(8, this.dimensions); i++) {
+      const semanticBoost = Math.min(1.0, semanticMatches * (this.dimensions > 500 ? 0.6 : 0.3));
+      const boostRange = Math.min(16, this.dimensions); // Boost more dimensions for large embeddings
+      for (let i = 0; i < boostRange; i++) {
         embedding[i] *= (1 + semanticBoost);
       }
     }

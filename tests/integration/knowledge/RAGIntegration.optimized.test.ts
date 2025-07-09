@@ -79,26 +79,40 @@ describe('RAG System Integration - Optimized', () => {
         console.log('Using MockRAGAdapter for fastest testing');
         aiAdapter = new MockRAGAdapter();
       } else {
-        console.log('Using OllamaRAGAdapterOptimized for integration testing');
-        aiAdapter = OllamaRAGAdapterOptimized.createQwen3AdapterOptimized();
+        console.log('Using OllamaRAGAdapterOptimized with Phi3 for faster testing');
+        aiAdapter = OllamaRAGAdapterOptimized.createPhi3AdapterOptimized();
       }
 
-      // Initialize vector store
+      // Initialize vector store with real embedding dimensions
       vectorStore = new VectorStore({
         provider: 'chroma',
         collectionName: `rag-optimized-test-${Date.now()}`,
-        dimensions: 384
+        dimensions: 1024 // mxbai-embed-large dimensions
       });
 
-      // Initialize semantic search with mock embedding provider
-      const { MockEmbeddingProvider } = await import('../../../src/knowledge/search/SemanticSearch');
-      const embeddingProvider = new MockEmbeddingProvider();
+      // Initialize semantic search with real Ollama embeddings
+      const { OllamaEmbeddingProvider } = await import('../../../src/knowledge/search/OllamaEmbeddingProvider');
+      const embeddingProvider = new OllamaEmbeddingProvider(
+        'mxbai-embed-large:latest', 
+        1024, // mxbai-embed-large dimensions
+        'http://localhost:11434'
+      );
+      
+      // Test if Ollama embeddings are available
+      const isOllamaAvailable = await embeddingProvider.isAvailable();
+      console.log('Ollama embeddings available for optimized test:', isOllamaAvailable);
+      
+      // Set the same embedding provider for VectorStore
+      vectorStore.setEmbeddingProvider(embeddingProvider);
       
       semanticSearch = new SemanticSearchEngine(
         vectorStore,
         embeddingProvider,
         undefined,
-        {}
+        {
+          defaultThreshold: 0.3, // Higher threshold for real embeddings
+          defaultLimit: 5
+        }
       );
 
       // Initialize RAG system with optimized configuration
@@ -153,7 +167,7 @@ describe('RAG System Integration - Optimized', () => {
 
       const response = await withTimeout(
         () => ragSystem.askQuestion(
-          'What is AI?',
+          'What is artificial intelligence and how does it work?',
           [],
           getOptimizedRagOptions(testConfig)
         ),
@@ -179,7 +193,7 @@ describe('RAG System Integration - Optimized', () => {
       // First question
       const firstResponse = await withTimeout(
         () => ragSystem.askQuestion(
-          'What is local AI?',
+          'What are the benefits of local AI deployment?',
           [],
           getOptimizedRagOptions(testConfig)
         ),
@@ -192,7 +206,7 @@ describe('RAG System Integration - Optimized', () => {
       // Follow-up with context
       const followUpResponse = await withTimeout(
         () => ragSystem.askQuestion(
-          'What are its benefits?',
+          'What about privacy benefits of local deployment?',
           [{ 
             role: 'assistant', 
             content: firstResponse.answer, 
@@ -218,7 +232,7 @@ describe('RAG System Integration - Optimized', () => {
 
       const response = await withTimeout(
         () => ragSystem.askQuestion(
-          'Tell me about AI deployment options',
+          'How can I deploy AI models locally?',
           [],
           getOptimizedRagOptions(testConfig)
         ),
@@ -298,7 +312,7 @@ describe('RAG System Integration - Optimized', () => {
       const startTime = Date.now();
       
       const response = await ragSystem.askQuestion(
-        'Explain AI briefly',
+        'Can you explain AI briefly?',
         [],
         getOptimizedRagOptions(testConfig)
       );
@@ -318,8 +332,8 @@ describe('RAG System Integration - Optimized', () => {
       }
 
       const questions = [
-        'What is AI?',
-        'What is local deployment?'
+        'What is artificial intelligence?',
+        'What is local AI deployment?'
       ];
 
       const startTime = Date.now();

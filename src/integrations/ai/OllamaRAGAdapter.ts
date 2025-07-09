@@ -62,7 +62,7 @@ export class OllamaRAGAdapter implements AIProvider {
       streaming: false,
       functionCalling: false,
       localExecution: true,
-      supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b'],
+      supportedModels: ['qwen3:8b', 'llama3.2:3b', 'qwen2.5-coder:7b', 'phi3:mini'],
       maxContextWindow: agent.getMaxContextWindow()
     };
   }
@@ -73,6 +73,23 @@ export class OllamaRAGAdapter implements AIProvider {
   public static createQwen3Adapter(): OllamaRAGAdapter {
     const agent = OllamaAgent.createQwen3Agent({
       name: 'qwen3-rag-agent',
+      type: 'execution',
+      capabilities: ['text_generation', 'reasoning', 'analysis'],
+      enabled: true,
+      priority: 1,
+      maxConcurrentTasks: 2
+    });
+    
+    return new OllamaRAGAdapter(agent);
+  }
+
+  /**
+   * Create a Phi3-compatible RAG adapter (factory method)
+   */
+  public static createPhi3Adapter(): OllamaRAGAdapter {
+    const agent = new OllamaAgent({
+      modelName: 'phi3:mini',
+      name: 'phi3-rag-agent',
       type: 'execution',
       capabilities: ['text_generation', 'reasoning', 'analysis'],
       enabled: true,
