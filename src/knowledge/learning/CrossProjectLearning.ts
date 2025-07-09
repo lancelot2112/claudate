@@ -274,8 +274,8 @@ export class CrossProjectLearning extends EventEmitter {
   private projectContexts: Map<string, ProjectContext> = new Map();
   
   private readonly SIMILARITY_THRESHOLD = 0.7;
-  private readonly _CONFIDENCE_THRESHOLD = 0.6;
-  private readonly _MAX_INSIGHTS_PER_PROJECT = 50;
+  // private readonly _CONFIDENCE_THRESHOLD = 0.6; // Unused for now
+  // private readonly _MAX_INSIGHTS_PER_PROJECT = 50; // Unused for now
 
   constructor() {
     super();
@@ -384,7 +384,7 @@ export class CrossProjectLearning extends EventEmitter {
         totalInsights: insights.length,
         applicableLearnings: prioritizedLearnings.length,
         highImpactLearnings: prioritizedLearnings.filter(l => 
-          l.insightId && this.getInsightById(l.insightId)?.impact.timeImpact > 5
+          l.insightId && (this.getInsightById(l.insightId)?.impact?.timeImpact || 0) > 5
         ).length,
       });
 
@@ -1289,7 +1289,7 @@ export class CrossProjectLearning extends EventEmitter {
         targetContext: learning.targetProjectId,
         adaptations: {
           ...learning.adaptations,
-          team: learning.adaptations.team || [],
+          team: (learning.adaptations as any).team || [],
         },
         confidence: 0.7,
         examples: [learning.id],

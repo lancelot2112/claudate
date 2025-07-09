@@ -437,7 +437,7 @@ export class DecisionSupportGenerator {
         ctx.textAlign = 'center';
         
         const labelY = y + (config.mobileOptimized ? 15 : 18);
-        const _maxLabelWidth = 60;
+        // const _maxLabelWidth = 60; // Unused for now
         const truncatedTitle = risk.title.length > 8 
           ? risk.title.substring(0, 8) + '...' 
           : risk.title;

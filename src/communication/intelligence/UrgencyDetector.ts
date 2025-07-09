@@ -755,35 +755,35 @@ export class UrgencyDetector extends EventEmitter {
     }
   }
 
-  private buildEscalationMessage(
-    template: string,
-    request: MessageRequest,
-    context: UrgencyContext,
-    event: EscalationEvent
-  ): string {
-    return template
-      .replace('{messageId}', context.messageId)
-      .replace('{userId}', context.userId)
-      .replace('{userRole}', context.userRole)
-      .replace('{timestamp}', context.timestamp.toISOString())
-      .replace('{step}', event.step.toString())
-      .replace('{content}', (request.content || '').substring(0, 200))
-      .replace('{reason}', event.reason);
-  }
+  // private buildEscalationMessage(
+  //   template: string,
+  //   request: MessageRequest,
+  //   context: UrgencyContext,
+  //   event: EscalationEvent
+  // ): string {
+  //   return template
+  //     .replace('{messageId}', context.messageId)
+  //     .replace('{userId}', context.userId)
+  //     .replace('{userRole}', context.userRole)
+  //     .replace('{timestamp}', context.timestamp.toISOString())
+  //     .replace('{step}', event.step.toString())
+  //     .replace('{content}', (request.content || '').substring(0, 200))
+  //     .replace('{reason}', event.reason);
+  // }
 
-  private getDefaultEscalationTemplate(): string {
-    return `🚨 ESCALATION ALERT - Step {step}
+  // private getDefaultEscalationTemplate(): string {
+  //   return `🚨 ESCALATION ALERT - Step {step}
 
-Message ID: {messageId}
-From: {userId} ({userRole})
-Time: {timestamp}
-Reason: {reason}
+  // Message ID: {messageId}
+  // From: {userId} ({userRole})
+  // Time: {timestamp}
+  // Reason: {reason}
 
-Content Preview:
-{content}
+  // Content Preview:
+  // {content}
 
-This message requires immediate attention due to detected urgency indicators.`;
-  }
+  // This message requires immediate attention due to detected urgency indicators.`;
+  // }
 
   private recordUrgencyHistory(userId: string, urgency: UrgencyLevel): void {
     const history = this.urgencyHistory.get(userId) || [];

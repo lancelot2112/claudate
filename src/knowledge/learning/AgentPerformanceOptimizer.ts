@@ -150,7 +150,7 @@ export class AgentPerformanceOptimizer extends EventEmitter {
   private feedbackHistory: Map<string, AgentFeedback[]> = new Map();
   private optimizationPlans: Map<string, OptimizationPlan[]> = new Map();
   private baselines: Map<string, PerformanceBaseline> = new Map();
-  private workloadBalancer: Map<string, WorkloadBalance> = new Map();
+  // private workloadBalancer: Map<string, WorkloadBalance> = new Map(); // Unused for now
   
   private readonly _PERFORMANCE_WINDOW = 24 * 60 * 60 * 1000; // 24 hours
   private readonly _OPTIMIZATION_THRESHOLD = 0.8; // Trigger optimization below 80%
@@ -181,7 +181,7 @@ export class AgentPerformanceOptimizer extends EventEmitter {
       this.storeMetricsInHistory(agentId, metrics);
       
       // Check if optimization is needed
-      if (metrics.overallScore < this.OPTIMIZATION_THRESHOLD) {
+      if (metrics.overallScore < this._OPTIMIZATION_THRESHOLD) {
         await this.triggerOptimization(agentId, metrics);
       }
       
@@ -190,7 +190,7 @@ export class AgentPerformanceOptimizer extends EventEmitter {
         overallScore: metrics.overallScore,
         successRate: metrics.taskMetrics.successRate,
         trends: metrics.trends,
-        requiresOptimization: metrics.overallScore < this.OPTIMIZATION_THRESHOLD,
+        requiresOptimization: metrics.overallScore < this._OPTIMIZATION_THRESHOLD,
       });
 
       logger.info('Agent performance analysis completed', {
@@ -338,7 +338,7 @@ export class AgentPerformanceOptimizer extends EventEmitter {
 
   private async calculatePerformanceMetrics(agentId: string, recentMetrics: any[]): Promise<PerformanceMetrics> {
     const now = new Date();
-    const windowStart = new Date(now.getTime() - this.PERFORMANCE_WINDOW);
+    const windowStart = new Date(now.getTime() - this._PERFORMANCE_WINDOW);
 
     const totalTasks = recentMetrics.length;
     const completedTasks = recentMetrics.filter(m => m.success).length;
@@ -531,7 +531,7 @@ export class AgentPerformanceOptimizer extends EventEmitter {
       details: `Performance below threshold: ${metrics.overallScore.toFixed(2)}`,
       context: {
         timestamp: new Date(),
-        metadata: { trigger: 'automatic', threshold: this.OPTIMIZATION_THRESHOLD },
+        metadata: { trigger: 'automatic', threshold: this._OPTIMIZATION_THRESHOLD },
       },
       impact: 'high',
       suggestions: [
@@ -1065,7 +1065,10 @@ export class AgentPerformanceOptimizer extends EventEmitter {
     
     for (const [agentId, history] of this.performanceHistory.entries()) {
       if (history.length > 0) {
-        currentMetrics.set(agentId, history[history.length - 1]);
+        const latestMetrics = history[history.length - 1];
+        if (latestMetrics) {
+          currentMetrics.set(agentId, latestMetrics);
+        }
       }
     }
     

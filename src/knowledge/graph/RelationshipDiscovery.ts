@@ -227,8 +227,8 @@ export class RelationshipDiscovery extends EventEmitter {
     for (const pattern of personPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        const name = match[1].trim();
-        if (name.length > 2 && name.length < 50) {
+        const name = match[1]?.trim();
+        if (name && name.length > 2 && name.length < 50) {
           entities.push(this.createEntity('person', name, entry, 0.7));
         }
       }
@@ -243,8 +243,8 @@ export class RelationshipDiscovery extends EventEmitter {
     for (const pattern of projectPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        const name = match[1].trim();
-        if (name.length > 2 && name.length < 100) {
+        const name = match[1]?.trim();
+        if (name && name.length > 2 && name.length < 100) {
           entities.push(this.createEntity('project', name, entry, 0.8));
         }
       }
@@ -260,8 +260,8 @@ export class RelationshipDiscovery extends EventEmitter {
     for (const pattern of taskPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        const name = match[1].trim();
-        if (name.length > 5 && name.length < 200) {
+        const name = match[1]?.trim();
+        if (name && name.length > 5 && name.length < 200) {
           entities.push(this.createEntity('task', name, entry, 0.6));
         }
       }
@@ -277,8 +277,8 @@ export class RelationshipDiscovery extends EventEmitter {
     for (const pattern of decisionPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        const name = match[1].trim();
-        if (name.length > 5 && name.length < 200) {
+        const name = match[1]?.trim();
+        if (name && name.length > 5 && name.length < 200) {
           entities.push(this.createEntity('decision', name, entry, 0.7));
         }
       }
@@ -293,8 +293,8 @@ export class RelationshipDiscovery extends EventEmitter {
     for (const pattern of conceptPatterns) {
       const matches = content.matchAll(pattern);
       for (const match of matches) {
-        const name = match[1].trim();
-        if (name.length > 3 && name.length < 100) {
+        const name = match[1]?.trim();
+        if (name && name.length > 3 && name.length < 100) {
           entities.push(this.createEntity('concept', name, entry, 0.6));
         }
       }
@@ -348,7 +348,7 @@ export class RelationshipDiscovery extends EventEmitter {
 
     for (const entry of entries) {
       const content = entry.content.toLowerCase();
-      const entryEntities = entities.filter(e => content.includes(e.name.toLowerCase()));
+      // const entryEntities = entities.filter(e => content.includes(e.name.toLowerCase())); // Unused for now
 
       // Find explicit relationship patterns
       for (const pattern of this.patterns.values()) {
@@ -384,8 +384,8 @@ export class RelationshipDiscovery extends EventEmitter {
       // Find assignment relationships
       const assignmentMatches = content.matchAll(/([a-z\s]+?)\s+(?:is\s+)?assigned\s+to\s+([a-z\s]+)/gi);
       for (const match of assignmentMatches) {
-        const task = entities.find(e => e.type === 'task' && match[1].includes(e.name.toLowerCase()));
-        const person = entities.find(e => e.type === 'person' && match[2].includes(e.name.toLowerCase()));
+        const task = entities.find(e => e.type === 'task' && match[1]?.includes(e.name.toLowerCase()));
+        const person = entities.find(e => e.type === 'person' && match[2]?.includes(e.name.toLowerCase()));
         
         if (task && person) {
           relationships.push(this.createRelationship(
@@ -428,6 +428,8 @@ export class RelationshipDiscovery extends EventEmitter {
             const entity1 = groupEntities[i];
             const entity2 = groupEntities[j];
 
+            if (!entity1 || !entity2) continue;
+
             // Skip if already have explicit relationship
             const existingRel = Array.from(this.relationshipCache.values()).find(r =>
               (r.fromEntity === entity1.id && r.toEntity === entity2.id) ||
@@ -462,6 +464,8 @@ export class RelationshipDiscovery extends EventEmitter {
       for (let j = i + 1; j < entities.length; j++) {
         const entity1 = entities[i];
         const entity2 = entities[j];
+
+        if (!entity1 || !entity2) continue;
 
         const similarity = this.calculateSemanticSimilarity(entity1, entity2);
         
@@ -541,6 +545,8 @@ export class RelationshipDiscovery extends EventEmitter {
 
         const entity1 = entities[i];
         const entity2 = entities[j];
+
+        if (!entity1 || !entity2) continue;
 
         // Check if one entity name contains the other
         if (entity1.name.toLowerCase().includes(entity2.name.toLowerCase()) && 

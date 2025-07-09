@@ -673,8 +673,12 @@ export class DecisionChainTracker extends EventEmitter {
     const timeIntervals = [];
     
     for (let i = 1; i < sortedDecisions.length; i++) {
-      const interval = sortedDecisions[i].timestamp.getTime() - sortedDecisions[i - 1].timestamp.getTime();
-      timeIntervals.push(interval);
+      const currentDecision = sortedDecisions[i];
+      const previousDecision = sortedDecisions[i - 1];
+      if (currentDecision && previousDecision) {
+        const interval = currentDecision.timestamp.getTime() - previousDecision.timestamp.getTime();
+        timeIntervals.push(interval);
+      }
     }
     
     if (timeIntervals.length > 2) {

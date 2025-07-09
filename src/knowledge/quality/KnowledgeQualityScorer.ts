@@ -759,7 +759,7 @@ export class KnowledgeQualityScorer extends EventEmitter {
     // Find last improvement
     let lastImprovement = new Date();
     for (let i = history.length - 1; i > 0; i--) {
-      if (history[i]?.overallScore > history[i - 1]?.overallScore) {
+      if ((history[i]?.overallScore || 0) > (history[i - 1]?.overallScore || 0)) {
         lastImprovement = history[i]?.metadata?.scoredAt || new Date();
         break;
       }
