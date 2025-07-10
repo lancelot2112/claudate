@@ -4,7 +4,7 @@ This document provides a comprehensive piecewise implementation plan for the Cla
 
 ## Overview
 
-**Total Timeline**: 30 weeks (7.5 months)  
+**Total Timeline**: 32 weeks (8 months)  
 **Architecture**: Multi-agent system with Personal Assistant, Gemini Strategic, and Claude Execution agents  
 **Tech Stack**: Node.js/TypeScript, PostgreSQL, Redis, Next.js  
 **Communication**: SMS/MMS, Google Chat, Email, Voice/Video processing
@@ -283,42 +283,336 @@ This document provides a comprehensive piecewise implementation plan for the Cla
 
 ---
 
-## Phase 9: Frontend Dashboard
-**Duration**: Weeks 26-28  
-**Goal**: Comprehensive web dashboard for system management
+## Phase 9: Comprehensive Web Dashboard
+**Duration**: Weeks 26-30 (Extended to 5 weeks)  
+**Goal**: Full-featured web interface for monitoring agents, communication channels, and task statuses
 
-### 9.1 Next.js Dashboard Setup
-- [ ] Next.js project setup with TypeScript
-- [ ] TailwindCSS configuration
-- [ ] Component library setup
-- [ ] Authentication integration
-- [ ] Real-time updates with WebSockets
+### 9.1 Backend Dashboard API Infrastructure
+**Duration**: Week 26  
+**Goal**: Create REST endpoints to serve dashboard data
 
-### 9.2 Agent Management Interface
-- [ ] Agent status monitoring
-- [ ] Agent configuration panels
-- [ ] Performance metrics dashboard
-- [ ] Agent lifecycle management
-- [ ] Debug and logging interfaces
+#### 9.1.1 Agent Status API
+- [ ] `GET /api/agents` - List all agents with current status
+- [ ] `GET /api/agents/:id` - Detailed agent information
+- [ ] `GET /api/agents/:id/metrics` - Agent performance metrics
+- [ ] `GET /api/agents/:id/tasks` - Agent's current and recent tasks
+- [ ] `POST /api/agents/:id/action` - Agent lifecycle actions (start/stop/restart)
 
-### 9.3 Communication Dashboard
-- [ ] Message history visualization
-- [ ] Channel performance metrics
-- [ ] Communication analytics
-- [ ] User preference management
-- [ ] System health monitoring
+#### 9.1.2 Communication Channel API
+- [ ] `GET /api/channels` - List all communication channels
+- [ ] `GET /api/channels/:id/status` - Channel health and connectivity
+- [ ] `GET /api/channels/:id/metrics` - Message volume, success rates, latency
+- [ ] `GET /api/channels/:id/messages` - Recent message history
+- [ ] `POST /api/channels/:id/test` - Test channel connectivity
 
-**Deliverable**: Comprehensive web dashboard for system management  
+#### 9.1.3 Task Monitoring API
+- [ ] `GET /api/tasks` - List all tasks with filtering (status, agent, priority)
+- [ ] `GET /api/tasks/:id` - Detailed task information and progress
+- [ ] `GET /api/tasks/statistics` - Task completion rates, average duration
+- [ ] `GET /api/tasks/queue` - Current task queue status
+- [ ] `POST /api/tasks/:id/cancel` - Cancel running task
+
+#### 9.1.4 System Metrics API
+- [ ] `GET /api/system/health` - Overall system health
+- [ ] `GET /api/system/metrics` - CPU, memory, database connectivity
+- [ ] `GET /api/system/logs` - Recent system logs with filtering
+- [ ] `GET /api/dashboard/snapshot` - Complete dashboard data snapshot
+
+### 9.2 Frontend Foundation & Setup
+**Duration**: Week 26-27  
+**Goal**: Establish React/Next.js frontend with authentication
+
+#### 9.2.1 Next.js Project Setup
+- [ ] Initialize Next.js 14+ project with TypeScript
+- [ ] Configure TailwindCSS with custom dashboard theme
+- [ ] Set up component library (Shadcn/UI or similar)
+- [ ] Configure routing and layout structure
+- [ ] Set up state management (React Query + Zustand)
+
+#### 9.2.2 Authentication & Security
+- [ ] JWT authentication integration with backend
+- [ ] Protected route middleware
+- [ ] User session management
+- [ ] Role-based access control (admin, viewer, operator)
+- [ ] Secure API client with token refresh
+
+#### 9.2.3 Core Layout & Navigation
+- [ ] Responsive dashboard layout
+- [ ] Sidebar navigation with agent/channel/task sections
+- [ ] Top header with user menu and system status
+- [ ] Breadcrumb navigation
+- [ ] Mobile-responsive collapsible menu
+
+### 9.3 Real-Time Agent Monitoring Dashboard
+**Duration**: Week 27  
+**Goal**: Live agent status and performance monitoring
+
+#### 9.3.1 Agent Status Overview
+- [ ] Agent grid/list view with status indicators (online/offline/busy/error)
+- [ ] Real-time status updates via WebSocket
+- [ ] Agent health indicators (CPU, memory, response time)
+- [ ] Quick action buttons (restart, stop, view logs)
+- [ ] Agent type identification and capabilities display
+
+#### 9.3.2 Individual Agent Detail Views
+- [ ] Detailed agent information page
+- [ ] Current task display with progress indicators
+- [ ] Recent task history with success/failure metrics
+- [ ] Agent-specific configuration panel
+- [ ] Performance metrics charts (response time, throughput, error rate)
+
+#### 9.3.3 Agent Performance Analytics
+- [ ] Performance trends over time (hour/day/week views)
+- [ ] Comparison charts between different agents
+- [ ] Task completion rate statistics
+- [ ] Error rate analysis and categorization
+- [ ] Resource utilization graphs
+
+### 9.4 Communication Channel Monitoring
+**Duration**: Week 28  
+**Goal**: Real-time communication channel status and analytics
+
+#### 9.4.1 Channel Status Dashboard
+- [ ] Channel grid showing all communication channels (SMS, MMS, Google Chat, Email)
+- [ ] Real-time connectivity status indicators
+- [ ] Message queue depth and processing speed
+- [ ] Channel-specific metrics (delivery rates, latency, errors)
+- [ ] Quick channel testing and diagnostics
+
+#### 9.4.2 Message Flow Visualization
+- [ ] Real-time message flow diagram
+- [ ] Message routing visualization
+- [ ] Channel utilization heatmaps
+- [ ] Message volume trends over time
+- [ ] Failed message tracking and retry status
+
+#### 9.4.3 Communication Analytics
+- [ ] Channel performance comparison charts
+- [ ] Message type distribution (text, media, voice)
+- [ ] Peak usage time analysis
+- [ ] User communication pattern insights
+- [ ] Channel efficiency metrics and recommendations
+
+### 9.5 Task Management & Progress Tracking
+**Duration**: Week 28-29  
+**Goal**: Comprehensive task monitoring and management interface
+
+#### 9.5.1 Task Queue Dashboard
+- [ ] Real-time task queue visualization
+- [ ] Task priority and status filtering
+- [ ] Task assignment to agents display
+- [ ] Queue depth monitoring and alerts
+- [ ] Task scheduling and dependency tracking
+
+#### 9.5.2 Task Progress Monitoring
+- [ ] Individual task detail pages with step-by-step progress
+- [ ] Real-time progress updates with WebSocket
+- [ ] Task execution timeline visualization
+- [ ] Sub-task and dependency tracking
+- [ ] Task output and result display
+
+#### 9.5.3 Task Analytics & Reporting
+- [ ] Task completion rate analytics
+- [ ] Average task duration by type and agent
+- [ ] Task failure analysis and categorization
+- [ ] Bottleneck identification in task processing
+- [ ] Agent workload balancing metrics
+
+### 9.6 Advanced Dashboard Features
+**Duration**: Week 29  
+**Goal**: Enhanced functionality with charts, exports, and real-time updates
+
+#### 9.6.1 Interactive Charts & Visualizations
+- [ ] Integration with Chart.js or D3.js for rich visualizations
+- [ ] Customizable dashboard widgets
+- [ ] Drag-and-drop dashboard layout editor
+- [ ] Chart export functionality (PNG, PDF)
+- [ ] Historical data comparison tools
+
+#### 9.6.2 Real-Time Updates & Notifications
+- [ ] WebSocket integration for live updates
+- [ ] Browser notifications for critical alerts
+- [ ] Real-time system status changes
+- [ ] Live agent status changes
+- [ ] Task completion notifications
+
+#### 9.6.3 Data Export & Reporting
+- [ ] Dashboard data export (CSV, JSON, PDF reports)
+- [ ] Scheduled report generation
+- [ ] Custom date range reporting
+- [ ] Performance report templates
+- [ ] System health report automation
+
+### 9.7 System Administration Interface
+**Duration**: Week 30  
+**Goal**: Administrative controls and system management
+
+#### 9.7.1 System Configuration Management
+- [ ] Agent configuration editing interface
+- [ ] Communication channel settings management
+- [ ] System-wide preference controls
+- [ ] Environment variable management
+- [ ] Feature flag toggles
+
+#### 9.7.2 User & Access Management
+- [ ] User account management interface
+- [ ] Role and permission assignment
+- [ ] Access log monitoring
+- [ ] Session management and controls
+- [ ] Security audit trail
+
+#### 9.7.3 System Maintenance Tools
+- [ ] Log viewer with filtering and search
+- [ ] Database maintenance tools
+- [ ] Cache management interface
+- [ ] System backup and restore controls
+- [ ] Performance optimization tools
+
+**Deliverable**: Full-featured web dashboard with real-time monitoring capabilities  
+
 **Success Criteria**:
-- Real-time agent status visible
-- Performance metrics tracked and displayed
-- System configuration manageable via UI
-- Communication analytics providing insights
+- Real-time agent status monitoring with live updates
+- Comprehensive communication channel analytics and health monitoring
+- Detailed task tracking with progress visualization
+- Interactive charts and customizable dashboard layouts
+- Administrative controls for system management
+- Mobile-responsive design for monitoring on-the-go
+- Export capabilities for reporting and analysis
+- WebSocket-based real-time updates throughout the interface
+
+---
+
+## Phase 9.5: Advanced Document Processing & Business Intelligence
+**Duration**: Week 30.5 (Parallel with Phase 9.7)  
+**Goal**: Enhanced document ingestion for business workflows (PDFs, CSVs, Excel, financial data)
+
+### 9.5.1 Advanced Document Processors
+**Goal**: Support for business document formats
+
+#### 9.5.1.1 PDF Document Processor
+- [ ] PDF text extraction with `pdf-parse` or `pdf2pic`
+- [ ] Table extraction from PDFs using `tabula-js` or similar
+- [ ] OCR support for scanned PDFs with `tesseract.js`
+- [ ] Financial statement parsing (invoice, receipt, bank statement patterns)
+- [ ] Preserve document structure and metadata
+
+#### 9.5.1.2 CSV/Excel Processor
+- [ ] CSV parsing with `csv-parser` with schema detection
+- [ ] Excel file support with `xlsx` library
+- [ ] Column type inference (dates, currency, numbers, categories)
+- [ ] Data validation and cleaning
+- [ ] Multi-sheet Excel support
+- [ ] Large file streaming for memory efficiency
+
+#### 9.5.1.3 Financial Data Processor
+- [ ] Transaction data standardization (date, amount, description, category)
+- [ ] Currency detection and normalization
+- [ ] Account number masking for privacy
+- [ ] Duplicate transaction detection
+- [ ] Smart categorization based on merchant/description patterns
+
+### 9.5.2 Business Intelligence Pipeline
+**Goal**: Transform raw business documents into actionable knowledge
+
+#### 9.5.2.1 Transaction Analysis Engine
+- [ ] Budget tracking and variance analysis
+- [ ] Spending pattern identification
+- [ ] Trend analysis (monthly, quarterly, yearly)
+- [ ] Anomaly detection for unusual transactions
+- [ ] Category-based spending insights
+
+#### 9.5.2.2 Smart Data Enrichment
+- [ ] Merchant categorization using AI analysis
+- [ ] Transaction splitting (e.g., grocery receipt with multiple categories)
+- [ ] Recurring payment detection
+- [ ] Tax category assignment
+- [ ] Business vs personal transaction classification
+
+#### 9.5.2.3 Knowledge Graph Integration
+- [ ] Entity extraction (vendors, accounts, categories, dates)
+- [ ] Relationship mapping (vendor-category, account-transaction patterns)
+- [ ] Temporal relationship tracking
+- [ ] Cross-document reference resolution
+
+### 9.5.3 Budget Pipeline Workflow
+**Goal**: Complete end-to-end budget management system
+
+#### 9.5.3.1 Document Upload Interface
+- [ ] Drag-and-drop file upload with preview
+- [ ] Batch upload for multiple bank statements
+- [ ] Progress tracking for large file processing
+- [ ] File validation and format detection
+- [ ] Upload history and re-processing capabilities
+
+#### 9.5.3.2 Data Validation & Review
+- [ ] Interactive data preview before ingestion
+- [ ] Column mapping interface for CSV files
+- [ ] Manual correction interface for OCR errors
+- [ ] Transaction categorization review
+- [ ] Duplicate detection and merge tools
+
+#### 9.5.3.3 Budget Analytics Dashboard
+- [ ] Real-time budget vs actual spending
+- [ ] Interactive charts for spending trends
+- [ ] Category breakdown with drill-down
+- [ ] Goal tracking and alerts
+- [ ] Forecasting based on historical patterns
+
+### 9.5.4 Agent Integration for Budget Management
+**Goal**: AI agents that understand and act on financial data
+
+#### 9.5.4.1 Budget Analysis Agent
+- [ ] Automated spending analysis and insights
+- [ ] Budget variance alerts and explanations
+- [ ] Spending optimization recommendations
+- [ ] Financial goal progress tracking
+- [ ] Monthly/quarterly budget reports
+
+#### 9.5.4.2 Transaction Processing Agent
+- [ ] Real-time transaction categorization
+- [ ] Suspicious transaction flagging
+- [ ] Receipt matching with bank transactions
+- [ ] Missing transaction identification
+- [ ] Automated expense reporting
+
+#### 9.5.4.3 Financial Advisory Agent
+- [ ] Personalized budget recommendations
+- [ ] Savings opportunity identification
+- [ ] Investment allocation suggestions
+- [ ] Debt optimization strategies
+- [ ] Tax planning assistance
+
+### 9.5.5 Example: Budget Pipeline Setup Workflow
+
+**User uploads bank statements (PDF) and expense receipts (CSV)**:
+
+1. **Document Detection**: System identifies PDF bank statements and CSV expense files
+2. **PDF Processing**: Extract transactions with dates, amounts, descriptions, account info
+3. **CSV Processing**: Parse expense data with category mapping
+4. **Data Validation**: User reviews extracted data, corrects categorizations
+5. **Knowledge Integration**: Store in vector DB with semantic embeddings for AI analysis
+6. **Agent Analysis**: Budget Analysis Agent generates insights and recommendations
+7. **Dashboard Update**: Real-time budget dashboard shows current status and trends
+8. **Smart Alerts**: System sends SMS/email when budget limits are approached
+
+**API Endpoints Added**:
+- `POST /api/documents/upload` - Multi-file upload with format detection
+- `GET /api/budget/analysis` - Current budget status and insights
+- `GET /api/transactions/categorize` - AI-powered transaction categorization
+- `POST /api/budget/goals` - Set and track financial goals
+- `GET /api/budget/forecast` - Spending forecasts and projections
+
+**Success Criteria**:
+- PDF bank statements parsed with 95%+ accuracy
+- CSV transaction data imported and categorized automatically
+- Real-time budget tracking with visual dashboards
+- AI agents providing actionable financial insights
+- Integration with existing agent communication system
 
 ---
 
 ## Phase 10: Testing & Deployment
-**Duration**: Weeks 29-30  
+**Duration**: Weeks 31-32  
 **Goal**: Production-ready Claudate system with full documentation
 
 ### 10.1 Comprehensive Testing
