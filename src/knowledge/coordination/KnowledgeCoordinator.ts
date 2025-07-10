@@ -7,11 +7,11 @@ import {
   DocumentType,
   GraphNode,
   GraphResult
-} from '../../types/Knowledge.js';
-import { SemanticSearchEngine } from '../search/SemanticSearch.js';
-import { RAGSystem } from '../rag/RAGSystem.js';
-import { ContextManager } from '../context/ContextManager.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { SemanticSearchEngine } from '../search/SemanticSearch';
+import { RAGSystem } from '../rag/RAGSystem';
+import { ContextManager } from '../context/ContextManager';
+import logger from '../../utils/logger';
 
 export interface CrossStoreQuery {
   query: string;

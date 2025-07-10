@@ -109,6 +109,30 @@ describe('PersonalAssistantAgent', () => {
     };
 
     agent = new PersonalAssistantAgent(config);
+    
+    // Manually set userConfig since Jest mock might not be applied during constructor
+    (agent as any).userConfig = {
+      communication: {
+        preferences: {
+          briefingStyle: 'bullet-points-max-3',
+          communicationHours: {
+            start: '09:00',
+            end: '17:00',
+            timezone: 'America/New_York',
+          },
+        },
+        channels: {
+          sms: {
+            enabled: true,
+            useFor: ['critical', 'urgent'],
+          },
+          email: {
+            enabled: true,
+            useFor: ['normal', 'low'],
+          },
+        },
+      },
+    };
   });
 
   afterEach(async () => {

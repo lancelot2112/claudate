@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import logger from './logger.js';
+import logger from './logger';
 
 export interface RateLimitConfig {
   windowMs: number; // Time window in milliseconds

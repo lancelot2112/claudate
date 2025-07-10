@@ -3,11 +3,11 @@ import {
   ContextTier,
   ContextEntry,
   ContextStats
-} from '../../types/Knowledge.js';
+} from '../../types/Knowledge';
 import { Pool } from 'pg';
 import { createClient, RedisClientType } from 'redis';
-import { config } from '../../utils/config.js';
-import logger from '../../utils/logger.js';
+import { config } from '../../utils/config';
+import logger from '../../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { gzip, gunzip } from 'zlib';
 import { promisify } from 'util';

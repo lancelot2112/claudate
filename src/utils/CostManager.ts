@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import logger from './logger.js';
-import { config } from './config.js';
+import logger from './logger';
+import { config } from './config';
 
 export interface CostEntry {
   id: string;

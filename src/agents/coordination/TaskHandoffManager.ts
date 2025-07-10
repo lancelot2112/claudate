@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import { AgentContext, AgentResult } from '../../types/Agent.js';
-import logger from '../../utils/logger.js';
+import { AgentContext, AgentResult } from '../../types/Agent';
+import logger from '../../utils/logger';
 
 export interface HandoffContext {
   taskId: string;

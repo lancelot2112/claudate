@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
-import { AgentConfig, AgentContext, AgentResult } from '../../types/Agent.js';
-import { AgentType } from '../../types/common.js';
+import { AgentConfig, AgentContext, AgentResult } from '../../types/Agent';
+import { AgentType } from '../../types/common';
 
 export abstract class BaseAgent extends EventEmitter {
   public readonly id: string;

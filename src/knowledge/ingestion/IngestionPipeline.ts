@@ -6,9 +6,9 @@ import {
   IVectorStore,
   IRelationalStore,
   DocumentProcessingError
-} from '../../types/Knowledge.js';
-import { DocumentProcessorRegistry } from './DocumentProcessor.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { DocumentProcessorRegistry } from './DocumentProcessor';
+import logger from '../../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
 import { EventEmitter } from 'events';
 

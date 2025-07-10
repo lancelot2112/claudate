@@ -13,6 +13,8 @@
     "test:e2e": "jest --testPathPattern=tests/e2e",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:safe": "jest --config=jest.safe.config.js",
+    "test:isolated": "timeout 300 jest --config=jest.safe.config.js --maxWorkers=1 --runInBand",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "type-check": "tsc --noEmit",

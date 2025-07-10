@@ -1,31 +1,34 @@
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { OllamaAgent, OllamaAgentConfig } from '../../../src/agents/ollama/OllamaAgent';
-import { AgentContext } from '../../../src/types/Agent';
 
 // Mock the OllamaClient to avoid real API calls
 jest.mock('../../../src/integrations/ai/OllamaClient', () => {
+  const mockSendMessage = jest.fn().mockImplementation((request: any) => {
+    // Check if this is a health check request
+    const isHealthCheck = request.messages?.some((msg: any) => 
+      msg.content?.includes('Test message for health check')
+    );
+    
+    return Promise.resolve({
+      content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
+      model: request.model || 'qwen3:8b',
+      done: true,
+      total_duration: 1000,
+      eval_count: 20
+    });
+  });
+
+  const mockGenerateEmbeddings = jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]]));
+  const mockHealthCheck = jest.fn(() => Promise.resolve({
+    healthy: true,
+    latencyMs: 100,
+    timestamp: new Date()
+  }));
+
   return {
     OllamaClient: jest.fn().mockImplementation(() => ({
-      sendMessage: jest.fn().mockImplementation((request: any) => {
-        // Check if this is a health check request
-        const isHealthCheck = request.messages?.some((msg: any) => 
-          msg.content?.includes('Test message for health check')
-        );
-        
-        return Promise.resolve({
-          content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
-          model: request.model || 'qwen3:8b',
-          done: true,
-          total_duration: 1000,
-          eval_count: 20
-        });
-      }),
-      generateEmbeddings: jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]])),
-      healthCheck: jest.fn(() => Promise.resolve({
-        healthy: true,
-        latencyMs: 100,
-        timestamp: new Date()
-      }))
+      sendMessage: mockSendMessage,
+      generateEmbeddings: mockGenerateEmbeddings,
+      healthCheck: mockHealthCheck
     }))
   };
 });
@@ -37,6 +40,10 @@ jest.mock('../../../src/utils/logger', () => ({
   warn: jest.fn(),
   error: jest.fn()
 }));
+
+// Import after mocks are set up
+import { OllamaAgent, OllamaAgentConfig } from '../../../src/agents/ollama/OllamaAgent';
+import { AgentContext } from '../../../src/types/Agent';
 
 describe('OllamaAgent', () => {
   describe('Static Methods', () => {
@@ -184,6 +191,29 @@ describe('OllamaAgent', () => {
         priority: 1,
         maxConcurrentTasks: 2
       });
+      
+      // Manually mock the ollamaClient after instantiation
+      (agent as any).ollamaClient = {
+        sendMessage: jest.fn().mockImplementation((request: any) => {
+          const isHealthCheck = request.messages?.some((msg: any) => 
+            msg.content?.includes('Test message for health check')
+          );
+          
+          return Promise.resolve({
+            content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
+            model: request.model || 'qwen3:8b',
+            done: true,
+            total_duration: 1000,
+            eval_count: 20
+          });
+        }),
+        generateEmbeddings: jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]])),
+        healthCheck: jest.fn(() => Promise.resolve({
+          healthy: true,
+          latencyMs: 100,
+          timestamp: new Date()
+        }))
+      };
     });
 
     afterEach(async () => {
@@ -332,6 +362,29 @@ describe('OllamaAgent', () => {
         priority: 1,
         maxConcurrentTasks: 2
       });
+      
+      // Manually mock the ollamaClient after instantiation
+      (agent as any).ollamaClient = {
+        sendMessage: jest.fn().mockImplementation((request: any) => {
+          const isHealthCheck = request.messages?.some((msg: any) => 
+            msg.content?.includes('Test message for health check')
+          );
+          
+          return Promise.resolve({
+            content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
+            model: request.model || 'qwen3:8b',
+            done: true,
+            total_duration: 1000,
+            eval_count: 20
+          });
+        }),
+        generateEmbeddings: jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]])),
+        healthCheck: jest.fn(() => Promise.resolve({
+          healthy: true,
+          latencyMs: 100,
+          timestamp: new Date()
+        }))
+      };
     });
 
     afterEach(async () => {
@@ -358,6 +411,29 @@ describe('OllamaAgent', () => {
         priority: 1,
         maxConcurrentTasks: 2
       });
+      
+      // Manually mock the ollamaClient after instantiation
+      (agent as any).ollamaClient = {
+        sendMessage: jest.fn().mockImplementation((request: any) => {
+          const isHealthCheck = request.messages?.some((msg: any) => 
+            msg.content?.includes('Test message for health check')
+          );
+          
+          return Promise.resolve({
+            content: isHealthCheck ? 'OK' : 'Mocked response from Ollama',
+            model: request.model || 'qwen3:8b',
+            done: true,
+            total_duration: 1000,
+            eval_count: 20
+          });
+        }),
+        generateEmbeddings: jest.fn(() => Promise.resolve([[0.1, 0.2, 0.3]])),
+        healthCheck: jest.fn(() => Promise.resolve({
+          healthy: true,
+          latencyMs: 100,
+          timestamp: new Date()
+        }))
+      };
     });
 
     afterEach(async () => {

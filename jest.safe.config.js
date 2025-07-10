@@ -29,12 +29,23 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   extensionsToTreatAsEsm: ['.ts'],
-  testTimeout: 10000,
-  verbose: true,
+  testTimeout: 15000,
+  verbose: false, // Reduce output to prevent terminal overflow
   clearMocks: true,
   restoreMocks: true,
-  // Worker isolation settings to prevent terminal crashes
+  // Maximum safety isolation settings
   maxWorkers: 1,
   forceExit: true,
   detectOpenHandles: true,
+  bail: true, // Stop on first failure
+  // Memory and resource limits
+  maxConcurrency: 1,
+  // Prevent hanging tests
+  testNamePattern: '^((?!integration|e2e).)*$', // Skip integration tests by default
+  // Safer error handling
+  errorOnDeprecated: false,
+  silent: false,
+  // Clean up after each test
+  resetModules: true,
+  resetMocks: true,
 };

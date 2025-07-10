@@ -1,3 +1,39 @@
+// Mock Twilio first
+const mockTwilioInstance = {
+  messages: {
+    create: jest.fn().mockResolvedValue({
+      sid: 'test-message-sid',
+      status: 'sent',
+      to: '+1234567890',
+      from: '+0987654321',
+      numSegments: 1,
+      price: '0.0075',
+      priceUnit: 'USD',
+    }),
+  },
+  incomingPhoneNumbers: {
+    list: jest.fn().mockResolvedValue([{
+      phoneNumber: '+0987654321',
+      sid: 'test-phone-sid',
+    }]),
+  },
+};
+
+jest.mock('twilio', () => ({
+  Twilio: jest.fn().mockImplementation(() => mockTwilioInstance),
+}));
+
+// Mock the logger
+jest.mock('@/utils/logger', () => ({
+  communicationLogger: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+  logCommunication: jest.fn(),
+}));
+
 import { CommunicationRouter } from '@/communication/router/Router';
 import { TwilioChannel } from '@/communication/channels/TwilioChannel';
 import { 
@@ -7,29 +43,6 @@ import {
   CommunicationPreference 
 } from '@/types/Communication';
 import { BaseMessage } from '@/types/common';
-
-// Mock Twilio
-jest.mock('twilio', () => ({
-  Twilio: jest.fn().mockImplementation(() => ({
-    messages: {
-      create: jest.fn().mockResolvedValue({
-        sid: 'test-message-sid',
-        status: 'sent',
-        to: '+1234567890',
-        from: '+0987654321',
-        numSegments: 1,
-        price: '0.0075',
-        priceUnit: 'USD',
-      }),
-    },
-    incomingPhoneNumbers: {
-      list: jest.fn().mockResolvedValue([{
-        phoneNumber: '+0987654321',
-        sid: 'test-phone-sid',
-      }]),
-    },
-  })),
-}));
 
 describe('CommunicationRouter', () => {
   let router: CommunicationRouter;
@@ -82,6 +95,29 @@ describe('CommunicationRouter', () => {
     };
 
     mockChannel = new TwilioChannel(mockChannelProviderConfig);
+    
+    // Mock the doInitialize method instead of trying to mock the Twilio client
+    (mockChannel as any).doInitialize = jest.fn().mockResolvedValue(undefined);
+    
+    // Mock the doSendMessage method to return successful delivery
+    (mockChannel as any).doSendMessage = jest.fn().mockImplementation((message: any) => {
+      return Promise.resolve({
+        success: true,
+        messageId: message.id, // Return the original message ID
+        deliveryStatus: 'delivered',
+        timestamp: Date.now(),
+        metadata: {
+          twilioSid: 'test-message-sid',
+          twilioStatus: 'sent',
+          twilioNumSegments: 1,
+          twilioPrice: '0.0075',
+          twilioPriceUnit: 'USD'
+        }
+      });
+    });
+    
+    // Set up the mocked twilioClient manually
+    (mockChannel as any).twilioClient = mockTwilioInstance;
     
     await router.initialize();
   });

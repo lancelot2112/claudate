@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
-import { BaseAgent } from '../base/Agent.js';
-import { AgentContext, AgentResult, AgentCapability } from '../../types/Agent.js';
-import logger from '../../utils/logger.js';
+import { BaseAgent } from '../base/Agent';
+import { AgentContext, AgentResult, AgentCapability } from '../../types/Agent';
+import logger from '../../utils/logger';
 
 export interface AgentRegistration {
   agent: BaseAgent;

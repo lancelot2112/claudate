@@ -8,9 +8,9 @@ import {
   QueryFilter,
   RelationalStoreStats,
   VectorStoreError
-} from '../../types/Knowledge.js';
-import { config } from '../../utils/config.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import { config } from '../../utils/config';
+import logger from '../../utils/logger';
 
 export interface RelationalStoreConfig {
   host: string;

@@ -5,8 +5,8 @@ import {
   GraphPath,
   GraphResult,
   VectorStoreError
-} from '../../types/Knowledge.js';
-import logger from '../../utils/logger.js';
+} from '../../types/Knowledge';
+import logger from '../../utils/logger';
 
 export interface GraphStoreConfig {
   persistToDisk?: boolean;
