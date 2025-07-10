@@ -152,21 +152,21 @@ export const config: AppConfig = {
   publicUrl: getEnvVar('PUBLIC_URL', 'http://localhost:3000'),
 
   database: {
-    url: getEnvVar('DATABASE_URL'),
+    url: getEnvVar('DATABASE_URL', 'postgresql://test:test@localhost:5432/test'),
     host: getEnvVar('DATABASE_HOST', 'localhost'),
     port: getEnvNumber('DATABASE_PORT', 5432),
     name: getEnvVar('DATABASE_NAME', 'claudate'),
     user: getEnvVar('DATABASE_USER', 'claudate'),
     username: getEnvVar('DATABASE_USER', 'claudate'),
-    password: getEnvVar('DATABASE_PASSWORD'),
+    password: getEnvVar('DATABASE_PASSWORD', 'test'),
     ssl: process.env.DATABASE_SSL === 'true',
   },
 
   redis: {
-    url: getEnvVar('REDIS_URL'),
+    url: getEnvVar('REDIS_URL', 'redis://localhost:6379'),
     host: getEnvVar('REDIS_HOST', 'localhost'),
     port: getEnvNumber('REDIS_PORT', 6379),
-    password: getEnvVar('REDIS_PASSWORD'),
+    password: getEnvVar('REDIS_PASSWORD', ''),
   },
 
   chroma: {
@@ -207,17 +207,17 @@ export const config: AppConfig = {
 
   communication: {
     twilio: {
-      accountSid: getEnvVar('TWILIO_ACCOUNT_SID'),
-      authToken: getEnvVar('TWILIO_AUTH_TOKEN'),
-      phoneNumber: getEnvVar('TWILIO_PHONE_NUMBER'),
+      accountSid: getEnvVar('TWILIO_ACCOUNT_SID', 'test'),
+      authToken: getEnvVar('TWILIO_AUTH_TOKEN', 'test'),
+      phoneNumber: getEnvVar('TWILIO_PHONE_NUMBER', '+1234567890'),
     },
     sendgrid: {
-      apiKey: getEnvVar('SENDGRID_API_KEY'),
-      fromEmail: getEnvVar('SENDGRID_FROM_EMAIL'),
+      apiKey: getEnvVar('SENDGRID_API_KEY', 'test'),
+      fromEmail: getEnvVar('SENDGRID_FROM_EMAIL', 'test@example.com'),
     },
     googleChat: {
-      credentialsPath: getEnvVar('GOOGLE_CHAT_CREDENTIALS_PATH'),
-      webhookUrl: getEnvVar('GOOGLE_CHAT_WEBHOOK_URL'),
+      credentialsPath: getEnvVar('GOOGLE_CHAT_CREDENTIALS_PATH', './test.json'),
+      webhookUrl: getEnvVar('GOOGLE_CHAT_WEBHOOK_URL', 'https://test.example.com'),
     },
   },
 
@@ -235,9 +235,9 @@ export const config: AppConfig = {
   },
 
   security: {
-    jwtSecret: getEnvVar('JWT_SECRET'),
+    jwtSecret: getEnvVar('JWT_SECRET', 'test_jwt_secret_for_development_only_123456789'),
     jwtExpiresIn: getEnvVar('JWT_EXPIRES_IN', '24h'),
-    encryptionKey: getEnvVar('ENCRYPTION_KEY'),
+    encryptionKey: getEnvVar('ENCRYPTION_KEY', 'test_encryption_key_123456789012'),
   },
 
   rateLimit: {

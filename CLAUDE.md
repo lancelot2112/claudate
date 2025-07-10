@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Claudate is an agentic team framework that orchestrates specialized AI agents for collaborative software development using local AI models. The system uses a three-layer architecture with unified AI provider support:
+Claudate is an agentic team framework that orchestrates specialized AI agents for collaborative software development using local AI models. The system uses a three-layer architecture with unified AI provider support and a comprehensive web dashboard:
 
 - **Personal Assistant Layer**: Primary communication interface and routing hub
 - **Strategic Layer (Local AI)**: High-level planning, architecture decisions, system design using local models
 - **Execution Layer (Local AI)**: Implementation, testing, debugging, and tool execution using local models
 - **Unified Provider System**: Abstract interface supporting multiple AI backends (currently Ollama)
+- **Web Dashboard**: Real-time monitoring and management interface for agents, channels, and tasks
 
 ## Ollama Agent Architecture
 
@@ -196,6 +197,42 @@ Test Coverage: 100% unit test success rate
 - **jest.safe.config.js**: Maximum safety with single worker mode
 - **jest.integration.config.js**: Integration test specific settings
 
+## Web Dashboard
+
+The system includes a comprehensive web dashboard for real-time monitoring and management of the Claudate framework:
+
+### Dashboard Features
+- **Real-time Agent Monitoring**: Live status updates, performance metrics, and control actions
+- **Communication Channel Management**: Status monitoring, message flow visualization, and testing
+- **Task Management**: Queue visualization, progress tracking, and analytics
+- **Interactive Visualizations**: Charts, flow diagrams, and real-time updates via WebSocket
+- **Responsive Design**: Mobile-optimized interface for monitoring on any device
+
+### Dashboard Architecture
+- **Backend**: Fastify REST API with 15+ endpoints (`/src/api/routes/dashboard.ts`)
+- **Frontend**: Next.js 14+ with TypeScript (`/dashboard-frontend-app/`)
+- **Real-time**: WebSocket integration for live updates
+- **State Management**: React Query for efficient data fetching
+- **Styling**: TailwindCSS with custom dashboard components
+
+### Accessing the Dashboard
+```bash
+# Start backend server (includes dashboard API)
+npm start
+
+# Start frontend development server (separate terminal)
+cd dashboard-frontend-app
+npm run dev
+
+# Dashboard will be available at http://localhost:3000/dashboard
+```
+
+### Dashboard Pages
+- **Main Dashboard** (`/dashboard`) - System overview with key metrics
+- **Agents** (`/dashboard/agents`) - Agent monitoring and management
+- **Channels** (`/dashboard/channels`) - Communication channel status
+- **Tasks** (`/dashboard/tasks`) - Task queue and analytics
+
 ## Development Branches
 
 - The master local ai first branch is localai-master
@@ -245,6 +282,12 @@ ollama list               # List available models
 cd pytorch-service   # Navigate to service directory
 python app.py        # Start PyTorch service
 python test_service.py # Test service functionality
+
+# Dashboard (Web Interface)
+cd dashboard-frontend-app # Navigate to dashboard directory
+npm run dev          # Start dashboard development server
+npm run build        # Build dashboard for production
+npm run lint         # Lint dashboard code
 
 # Docker Services
 docker-compose up    # Start all services (Node.js + databases)

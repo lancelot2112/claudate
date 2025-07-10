@@ -7,6 +7,8 @@ import websocket from '@fastify/websocket';
 
 import { config } from '@/utils/config';
 import logger, { apiLogger } from '@/utils/logger';
+import { dashboardRoutes } from './api/routes/dashboard';
+import { DashboardManager } from './api/services/DashboardManager';
 
 // Create Fastify instance
 const fastify = Fastify({
@@ -48,6 +50,9 @@ async function registerPlugins() {
 
   // WebSocket support for real-time communication
   await fastify.register(websocket);
+  
+  // Dashboard routes
+  await fastify.register(dashboardRoutes);
 }
 
 // Register routes
@@ -158,6 +163,10 @@ async function start() {
     // Register plugins and routes
     await registerPlugins();
     await registerRoutes();
+    
+    // Initialize dashboard manager
+    const dashboardManager = DashboardManager.getInstance();
+    await dashboardManager.initialize();
 
     // Start listening
     await fastify.listen({
